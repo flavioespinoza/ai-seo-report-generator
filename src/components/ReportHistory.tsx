@@ -2,16 +2,7 @@
 
 import React from 'react'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
-
-interface ReportSummary {
-  id?: number | string
-  _id?: string
-  url: string
-  pageTitle: string | null
-  metaDescription: string | null
-  createdAt: string
-  hasIssues: boolean
-}
+import type { ReportSummary } from '@/types/report'
 
 interface ReportHistoryProps {
   reports: ReportSummary[]
