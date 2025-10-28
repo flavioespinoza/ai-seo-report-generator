@@ -6,6 +6,7 @@ interface ErrorAlertProps {
 }
 
 export default function ErrorAlert({ message, onDismiss }: ErrorAlertProps) {
+  console.log('Error Alert:', message);
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -24,7 +25,7 @@ export default function ErrorAlert({ message, onDismiss }: ErrorAlertProps) {
             />
           </svg>
           <div className="flex-1">
-            <h3 className="text-sm font-medium text-red-800">Error</h3>
+            <h3 className="text-sm font-medium text-red-800">Error Balls</h3>
             <p className="mt-1 text-sm text-red-700">{message}</p>
           </div>
           {onDismiss && (

@@ -39,7 +39,7 @@ export default function SeoReport({ report, onExport }: SeoReportProps) {
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">SEO Analysis Report</h2>
-            
+            <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
