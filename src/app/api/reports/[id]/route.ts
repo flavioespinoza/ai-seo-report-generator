@@ -1,84 +1,62 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { dbOperations } from '@/lib/db';
+import { NextResponse } from 'next/server'
+import clientPromise from '@/lib/db'
+import { ObjectId } from 'mongodb'
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id);
-    
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'Invalid report ID' },
-        { status: 400 }
-      );
+    const client = await clientPromise
+    const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+    const collection = db.collection('reports')
+
+    let query
+    try {
+      query = { _id: new ObjectId(params.id) }
+    } catch {
+      return NextResponse.json({ success: false, error: 'Invalid report ID.' }, { status: 400 })
     }
 
-    const report = dbOperations.getReportById(id);
-
+    const report = await collection.findOne(query)
     if (!report) {
-      return NextResponse.json(
-        { error: 'Report not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Report not found.' }, { status: 404 })
     }
-
-    const transformedReport = {
-      id: report.id,
-      url: report.url,
-      metadata: {
-        pageTitle: report.page_title,
-        metaDescription: report.meta_description,
-        metaKeywords: report.meta_keywords,
-        h1Tags: report.h1_tags?.split(' | ') || [],
-        imageCount: report.image_count,
-        hasFavicon: report.has_favicon === 1,
-      },
-      aiFeedback: report.ai_feedback,
-      createdAt: report.created_at,
-    };
 
     return NextResponse.json({
       success: true,
-      report: transformedReport,
-    });
+      report: { ...report, _id: report._id.toString() },
+    })
   } catch (error) {
-    console.error('Fetch report error:', error);
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch report' },
-      { status: 500 }
-    );
+    console.error('Error in GET /api/reports/[id]:', error)
+    return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id);
-    
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'Invalid report ID' },
-        { status: 400 }
-      );
+    const client = await clientPromise
+    const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+    const collection = db.collection('reports')
+
+    let query
+    try {
+      query = { _id: new ObjectId(params.id) }
+    } catch {
+      return NextResponse.json({ success: false, error: 'Invalid report ID.' }, { status: 400 })
     }
 
-    dbOperations.deleteReport(id);
+    const result = await collection.deleteOne(query)
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ success: false, error: 'Report not found.' }, { status: 404 })
+    }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Report deleted successfully',
-    });
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Delete report error:', error);
-    
-    return NextResponse.json(
-      { error: 'Failed to delete report' },
-      { status: 500 }
-    );
+    console.error('Error in DELETE /api/reports/[id]:', error)
+    return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
   }
 }

@@ -1,5 +1,6 @@
+'use client'
+
 import React from 'react'
-import MarkdownWithCode from './markdown-with-code'
 
 interface Metadata {
   pageTitle: string | null
@@ -14,7 +15,8 @@ interface Metadata {
 
 interface SeoReportProps {
   report: {
-    id?: number
+    _id?: string
+    id?: string | number
     url: string
     metadata: Metadata
     aiFeedback: string
@@ -23,116 +25,41 @@ interface SeoReportProps {
 }
 
 export default function SeoReport({ report }: SeoReportProps) {
-  const { metadata, aiFeedback, url, createdAt } = report
-
-  const getStatusColor = (hasValue: boolean) => {
-    return hasValue ? 'text-green-600' : 'text-red-600'
-  }
-
-  const getStatusIcon = (hasValue: boolean) => {
-    return hasValue ? '✓' : '✗'
-  }
+  const { url, metadata, aiFeedback, createdAt } = report
 
   return (
-    <div id="seo-report-container" className="mx-auto w-full max-w-5xl space-y-6 bg-white p-6 rounded-lg shadow-md">
-      <div>
-        <div className="mb-4 flex items-start justify-between">
-          <div className="flex-1">
-            <h2 className="text-gray-900 mb-2 text-2xl font-bold">SEO Analysis Report</h2>
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="break-all text-blue-600 hover:underline"
-            >
-              {url}
-            </a>
-            {createdAt && (
-              <p className="text-gray-500 mt-2 text-sm">
-                Generated: {new Date(createdAt).toLocaleString()}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+    <div
+      id="seo-report-container"
+      className="bg-white shadow-lg rounded-xl p-6 border border-gray-200"
+    >
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        SEO Report for {url}
+      </h2>
+      {createdAt && (
+        <p className="text-sm text-gray-500 mb-4">
+          Generated on {new Date(createdAt).toLocaleString()}
+        </p>
+      )}
 
-      <div>
-        <h3 className="text-gray-900 mb-4 text-xl font-semibold">Page Metadata</h3>
-        <div className="space-y-4">
-          <div>
-            <div className="mb-1 flex items-center gap-2">
-              <span className={`font-medium ${getStatusColor(!!metadata.pageTitle)}`}>
-                {getStatusIcon(!!metadata.pageTitle)}
-              </span>
-              <span className="text-gray-700 font-medium">Page Title</span>
-              {metadata.titleLength && (
-                <span className="text-gray-500 text-sm">({metadata.titleLength} characters)</span>
-              )}
-            </div>
-            <p className="text-gray-600 ml-6">{metadata.pageTitle || 'No title found'}</p>
-          </div>
+      <section className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">Page Metadata</h3>
+        <ul className="text-sm text-gray-700 space-y-1">
+          <li><strong>Title:</strong> {metadata.pageTitle || 'Missing'}</li>
+          <li><strong>Description:</strong> {metadata.metaDescription || 'Missing'}</li>
+          <li><strong>Keywords:</strong> {metadata.metaKeywords || 'Not specified'}</li>
+          <li><strong>Images:</strong> {metadata.imageCount}</li>
+          <li><strong>Favicon:</strong> {metadata.hasFavicon ? 'Present' : 'Missing'}</li>
+          <li>
+            <strong>H1 Tags:</strong>{' '}
+            {metadata.h1Tags.length > 0 ? metadata.h1Tags.join(', ') : 'None'}
+          </li>
+        </ul>
+      </section>
 
-          <div>
-            <div className="mb-1 flex items-center gap-2">
-              <span className={`font-medium ${getStatusColor(!!metadata.metaDescription)}`}>
-                {getStatusIcon(!!metadata.metaDescription)}
-              </span>
-              <span className="text-gray-700 font-medium">Meta Description</span>
-              {metadata.descriptionLength && (
-                <span className="text-gray-500 text-sm">
-                  ({metadata.descriptionLength} characters)
-                </span>
-              )}
-            </div>
-            <p className="text-gray-600 ml-6">
-              {metadata.metaDescription || 'No description found'}
-            </p>
-          </div>
-
-          <div>
-            <div className="mb-1 flex items-center gap-2">
-              <span className={`font-medium ${getStatusColor(metadata.h1Tags.length > 0)}`}>
-                {getStatusIcon(metadata.h1Tags.length > 0)}
-              </span>
-              <span className="text-gray-700 font-medium">H1 Tags</span>
-              <span className="text-gray-500 text-sm">({metadata.h1Tags.length} found)</span>
-            </div>
-            {metadata.h1Tags.length > 0 ? (
-              <ul className="ml-6 space-y-1">
-                {metadata.h1Tags.map((tag, index) => (
-                  <li key={index} className="text-gray-600">
-                    • {tag}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-600 ml-6">No H1 tags found</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-2">
-            <div>
-              <span className="text-gray-700 font-medium">Images: </span>
-              <span className="text-gray-600">{metadata.imageCount}</span>
-            </div>
-            <div>
-              <span className="text-gray-700 font-medium">Favicon: </span>
-              <span className={getStatusColor(metadata.hasFavicon)}>
-                {metadata.hasFavicon ? 'Present' : 'Missing'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-gray-900 mb-4 text-xl font-semibold">AI-Powered SEO Analysis</h3>
-        <div className="prose max-w-none">
-          <div id="parent">
-            <MarkdownWithCode markdown={aiFeedback} />
-          </div>
-        </div>
-      </div>
+      <section>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">AI Feedback</h3>
+        <p className="text-sm text-gray-700 whitespace-pre-line">{aiFeedback}</p>
+      </section>
     </div>
   )
 }

@@ -9,7 +9,8 @@ import ExportButtons from '@/components/ExportButtons'
 import { generateMarkdown, exportToPDF } from '@/lib/export'
 
 interface Report {
-  id?: number
+  _id?: string
+  id?: string | number
   url: string
   metadata: {
     pageTitle: string | null
@@ -26,7 +27,8 @@ interface Report {
 }
 
 interface ReportSummary {
-  id: number
+  _id?: string
+  id?: string | number
   url: string
   pageTitle: string | null
   metaDescription: string | null
@@ -82,7 +84,7 @@ export default function Home() {
     }
   }
 
-  const handleSelectReport = async (id: number) => {
+  const handleSelectReport = async (id: string | number) => {
     try {
       const response = await fetch(`/api/reports/${id}`)
       const data = await response.json()
@@ -95,11 +97,13 @@ export default function Home() {
     }
   }
 
-  const handleDeleteReport = async (id: number) => {
+  const handleDeleteReport = async (id: string | number) => {
     try {
       const response = await fetch(`/api/reports/${id}`, { method: 'DELETE' })
       if (response.ok) {
-        if (currentReport?.id === id) setCurrentReport(null)
+        if (currentReport?._id === id || currentReport?.id === id) {
+          setCurrentReport(null)
+        }
         await fetchReportHistory()
       }
     } catch {
@@ -194,6 +198,7 @@ export default function Home() {
             onSelectReport={handleSelectReport}
             onDeleteReport={handleDeleteReport}
             loading={historyLoading}
+            activeReportId={currentReport?._id || currentReport?.id || null}
           />
         </div>
 
