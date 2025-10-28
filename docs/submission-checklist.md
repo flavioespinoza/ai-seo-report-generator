@@ -47,12 +47,14 @@
 ### 🚀 To Submit
 
 **Zip the project:**
+
 ```bash
 cd /mnt/user-data/outputs
 zip -r seo-report-generator.zip seo-report-generator -x "*/node_modules/*" -x "*/.next/*" -x "*/data/*"
 ```
 
 **Or create Git repository:**
+
 ```bash
 cd seo-report-generator
 git init
@@ -66,6 +68,7 @@ git commit -m "Initial commit: SEO Report Generator"
 **Subject:** Coding Challenge Submission - Flavio Espinoza - Option 3
 
 **Body:**
+
 ```
 Hi Leon,
 
@@ -97,6 +100,7 @@ Flavio Espinoza
 ### 🎥 Optional: Loom Walkthrough
 
 If creating a video:
+
 1. Show the URL input and analysis process
 2. Demonstrate the AI feedback
 3. Show report history and selection

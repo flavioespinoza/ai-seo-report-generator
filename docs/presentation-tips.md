@@ -5,18 +5,21 @@
 ### 1. Architecture Decisions
 
 **Why Next.js 14 App Router?**
+
 - Modern React patterns with Server Components
 - Built-in API routes eliminate need for separate backend
 - Excellent TypeScript support
 - Production-ready with minimal configuration
 
 **Why SQLite?**
+
 - Zero configuration - works out of the box
 - Perfect for MVP and demos
 - Easy to migrate to PostgreSQL later
 - better-sqlite3 offers synchronous API for simplicity
 
 **Why Cheerio over Puppeteer?**
+
 - Faster and lighter weight
 - No browser overhead
 - Perfect for static content
@@ -25,6 +28,7 @@
 ### 2. Code Quality Highlights
 
 **Separation of Concerns:**
+
 ```
 lib/scraper.ts  → Web scraping logic
 lib/openai.ts   → AI integration
@@ -34,12 +38,14 @@ components/     → Pure UI components
 ```
 
 **Type Safety:**
+
 - Full TypeScript coverage
 - Zod schemas for runtime validation
 - No `any` types
 - Proper error types
 
 **Error Handling:**
+
 - Custom error classes (ScraperError)
 - Graceful degradation
 - User-friendly messages
@@ -48,16 +54,19 @@ components/     → Pure UI components
 ### 3. Technical Challenges & Solutions
 
 **Challenge 1: Handling Diverse Website Structures**
+
 - Solution: Flexible Cheerio selectors with null checks
 - Graceful handling of missing metadata
 - AI still provides value even with incomplete data
 
 **Challenge 2: Making AI Responses Actionable**
+
 - Solution: Structured prompts with specific sections
 - Pre-analyzed issues fed to AI for context
 - Request for bullet-pointed recommendations
 
 **Challenge 3: UX During Long Operations**
+
 - Solution: Loading states, optimistic updates
 - 10-second timeout prevents hanging
 - Clear error messages guide users
@@ -65,12 +74,14 @@ components/     → Pure UI components
 ### 4. Testing Strategy
 
 **What I Tested:**
+
 - Utility functions (scraper validation)
 - Component rendering and interactions
 - Error scenarios
 - User workflows
 
 **Why These Tests:**
+
 - Focus on critical paths
 - Mock external dependencies
 - Fast execution for rapid feedback
@@ -79,18 +90,21 @@ components/     → Pure UI components
 ### 5. Bonus Features Rationale
 
 **Export to Markdown:**
+
 - Portable format
 - Easy to share with teams
 - Can be versioned in Git
 - Simple to implement
 
 **Historical Reports:**
+
 - Enables trend analysis
 - Demonstrates data persistence
 - Shows full-stack capability
 - Good UX feature
 
 **Delete Functionality:**
+
 - CRUD completeness
 - Practical for real use
 - Shows attention to UX
@@ -99,9 +113,11 @@ components/     → Pure UI components
 ## Demo Script
 
 ### 1. Introduction (30 seconds)
+
 "I built an AI-powered SEO report generator using Next.js 14, TypeScript, and OpenAI's GPT-4. It scrapes website metadata, analyzes it with AI, and provides actionable recommendations."
 
 ### 2. Live Demo (2 minutes)
+
 1. **Show URL input:** "Let me analyze a real website..."
 2. **Enter URL:** Use a well-known site (example.com, news site, etc.)
 3. **Show loading state:** "Notice the loading indicator..."
@@ -112,6 +128,7 @@ components/     → Pure UI components
 ### 3. Code Walkthrough (2-3 minutes)
 
 **Backend:**
+
 ```typescript
 // lib/scraper.ts - Clean, testable web scraping
 // lib/openai.ts - Structured AI prompts
@@ -119,18 +136,21 @@ components/     → Pure UI components
 ```
 
 **API Layer:**
+
 ```typescript
 // app/api/analyze/route.ts
 // Orchestrates: scrape → analyze → save → return
 ```
 
 **Frontend:**
+
 ```typescript
 // components/ - Reusable, tested components
 // app/page.tsx - State management and API calls
 ```
 
 ### 4. Architecture Diagram (30 seconds)
+
 ```
 User Input → API Route → Scraper → OpenAI → Database
                                           ↓
@@ -138,6 +158,7 @@ User Input → API Route → Scraper → OpenAI → Database
 ```
 
 ### 5. Tests (30 seconds)
+
 ```bash
 yarn test
 # Show passing tests
@@ -168,6 +189,7 @@ A: "GPT-4 Mini is cost-effective while maintaining quality for this use case. It
 ## Confidence Builders
 
 ### What Went Well
+
 ✅ Clean architecture with separation of concerns
 ✅ Comprehensive error handling
 ✅ Good test coverage of critical paths
@@ -176,6 +198,7 @@ A: "GPT-4 Mini is cost-effective while maintaining quality for this use case. It
 ✅ Clear documentation
 
 ### Areas for Improvement (If Asked)
+
 - Could add more comprehensive tests (API routes)
 - Pagination for large report lists
 - More sophisticated caching strategy
@@ -183,6 +206,7 @@ A: "GPT-4 Mini is cost-effective while maintaining quality for this use case. It
 - Webhook notifications for long analyses
 
 ### Your Strengths Demonstrated
+
 1. **Full-Stack Capability** - Backend APIs + Frontend UI
 2. **AI Integration** - Effective prompt engineering
 3. **Code Quality** - TypeScript, testing, documentation

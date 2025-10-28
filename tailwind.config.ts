@@ -121,9 +121,7 @@ const config: Config = {
 			}
 		}
 	},
-	plugins: [
-		fluid
-	]
+	plugins: [fluid]
 }
 
 export default config

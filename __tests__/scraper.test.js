@@ -1,15 +1,15 @@
-import { scrapeMetadata, validateMetadata, ScraperError } from '@/lib/scraper';
+import { ScraperError, scrapeMetadata, validateMetadata } from '@/lib/scraper'
 
-global.fetch = jest.fn();
+global.fetch = jest.fn()
 
 describe('Scraper', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+	beforeEach(() => {
+		jest.clearAllMocks()
+	})
 
-  describe('scrapeMetadata', () => {
-    it('should successfully scrape metadata from valid HTML', async () => {
-      const mockHtml = `
+	describe('scrapeMetadata', () => {
+		it('should successfully scrape metadata from valid HTML', async () => {
+			const mockHtml = `
         <!DOCTYPE html>
         <html>
           <head>
@@ -24,196 +24,196 @@ describe('Scraper', () => {
             <img src="test2.jpg" alt="Test 2">
           </body>
         </html>
-      `;
+      `
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => mockHtml,
-        status: 200,
-        statusText: 'OK',
-      });
+			global.fetch.mockResolvedValueOnce({
+				ok: true,
+				text: async () => mockHtml,
+				status: 200,
+				statusText: 'OK'
+			})
 
-      const result = await scrapeMetadata('https://example.com');
+			const result = await scrapeMetadata('https://example.com')
 
-      expect(result).toMatchObject({
-        url: 'https://example.com',
-        pageTitle: 'Test Page Title',
-        metaDescription: 'Test description for SEO',
-        metaKeywords: 'test, seo, keywords',
-        imageCount: 2,
-        hasFavicon: true,
-      });
-      expect(result.h1Tags).toContain('Main Heading');
-    });
+			expect(result).toMatchObject({
+				url: 'https://example.com',
+				pageTitle: 'Test Page Title',
+				metaDescription: 'Test description for SEO',
+				metaKeywords: 'test, seo, keywords',
+				imageCount: 2,
+				hasFavicon: true
+			})
+			expect(result.h1Tags).toContain('Main Heading')
+		})
 
-    it('should handle missing metadata gracefully', async () => {
-      const mockHtml = `
+		it('should handle missing metadata gracefully', async () => {
+			const mockHtml = `
         <!DOCTYPE html>
         <html>
           <head></head>
           <body><p>No metadata</p></body>
         </html>
-      `;
+      `
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => mockHtml,
-      });
+			global.fetch.mockResolvedValueOnce({
+				ok: true,
+				text: async () => mockHtml
+			})
 
-      const result = await scrapeMetadata('https://example.com');
+			const result = await scrapeMetadata('https://example.com')
 
-      expect(result.pageTitle).toBeNull();
-      expect(result.metaDescription).toBeNull();
-      expect(result.metaKeywords).toBeNull();
-      expect(result.h1Tags).toHaveLength(0);
-    });
+			expect(result.pageTitle).toBeNull()
+			expect(result.metaDescription).toBeNull()
+			expect(result.metaKeywords).toBeNull()
+			expect(result.h1Tags).toHaveLength(0)
+		})
 
-    it('should throw error for invalid URL', async () => {
-      await expect(scrapeMetadata('not-a-url')).rejects.toThrow(ScraperError);
-    });
+		it('should throw error for invalid URL', async () => {
+			await expect(scrapeMetadata('not-a-url')).rejects.toThrow(ScraperError)
+		})
 
-    it('should throw error for failed fetch', async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
-      });
+		it('should throw error for failed fetch', async () => {
+			global.fetch.mockResolvedValueOnce({
+				ok: false,
+				status: 404,
+				statusText: 'Not Found'
+			})
 
-      await expect(scrapeMetadata('https://example.com')).rejects.toThrow(ScraperError);
-    });
+			await expect(scrapeMetadata('https://example.com')).rejects.toThrow(ScraperError)
+		})
 
-    it('should add https:// protocol if missing', async () => {
-      const mockHtml = '<html><head><title>Test</title></head></html>';
+		it('should add https:// protocol if missing', async () => {
+			const mockHtml = '<html><head><title>Test</title></head></html>'
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => mockHtml,
-      });
+			global.fetch.mockResolvedValueOnce({
+				ok: true,
+				text: async () => mockHtml
+			})
 
-      const result = await scrapeMetadata('example.com');
-      expect(result.url).toBe('https://example.com');
-    });
-  });
+			const result = await scrapeMetadata('example.com')
+			expect(result.url).toBe('https://example.com')
+		})
+	})
 
-  describe('validateMetadata', () => {
-    it('should identify missing title as an issue', () => {
-      const metadata = {
-        url: 'https://example.com',
-        pageTitle: null,
-        metaDescription: 'Valid description',
-        metaKeywords: null,
-        h1Tags: ['Heading'],
-        imageCount: 5,
-        hasFavicon: true,
-        titleLength: 0,
-        descriptionLength: 18,
-      };
+	describe('validateMetadata', () => {
+		it('should identify missing title as an issue', () => {
+			const metadata = {
+				url: 'https://example.com',
+				pageTitle: null,
+				metaDescription: 'Valid description',
+				metaKeywords: null,
+				h1Tags: ['Heading'],
+				imageCount: 5,
+				hasFavicon: true,
+				titleLength: 0,
+				descriptionLength: 18
+			}
 
-      const result = validateMetadata(metadata);
-      expect(result.issues).toContain('Missing page title');
-    });
+			const result = validateMetadata(metadata)
+			expect(result.issues).toContain('Missing page title')
+		})
 
-    it('should warn about short title', () => {
-      const metadata = {
-        url: 'https://example.com',
-        pageTitle: 'Short',
-        metaDescription: 'Valid description',
-        metaKeywords: null,
-        h1Tags: ['Heading'],
-        imageCount: 5,
-        hasFavicon: true,
-        titleLength: 5,
-        descriptionLength: 18,
-      };
+		it('should warn about short title', () => {
+			const metadata = {
+				url: 'https://example.com',
+				pageTitle: 'Short',
+				metaDescription: 'Valid description',
+				metaKeywords: null,
+				h1Tags: ['Heading'],
+				imageCount: 5,
+				hasFavicon: true,
+				titleLength: 5,
+				descriptionLength: 18
+			}
 
-      const result = validateMetadata(metadata);
-      expect(result.warnings).toContain('Title is too short (recommended: 50-60 characters)');
-    });
+			const result = validateMetadata(metadata)
+			expect(result.warnings).toContain('Title is too short (recommended: 50-60 characters)')
+		})
 
-    it('should warn about long title', () => {
-      const metadata = {
-        url: 'https://example.com',
-        pageTitle: 'A'.repeat(70),
-        metaDescription: 'Valid description',
-        metaKeywords: null,
-        h1Tags: ['Heading'],
-        imageCount: 5,
-        hasFavicon: true,
-        titleLength: 70,
-        descriptionLength: 18,
-      };
+		it('should warn about long title', () => {
+			const metadata = {
+				url: 'https://example.com',
+				pageTitle: 'A'.repeat(70),
+				metaDescription: 'Valid description',
+				metaKeywords: null,
+				h1Tags: ['Heading'],
+				imageCount: 5,
+				hasFavicon: true,
+				titleLength: 70,
+				descriptionLength: 18
+			}
 
-      const result = validateMetadata(metadata);
-      expect(result.warnings).toContain('Title is too long (recommended: 50-60 characters)');
-    });
+			const result = validateMetadata(metadata)
+			expect(result.warnings).toContain('Title is too long (recommended: 50-60 characters)')
+		})
 
-    it('should identify missing meta description as an issue', () => {
-      const metadata = {
-        url: 'https://example.com',
-        pageTitle: 'Valid Title',
-        metaDescription: null,
-        metaKeywords: null,
-        h1Tags: ['Heading'],
-        imageCount: 5,
-        hasFavicon: true,
-        titleLength: 11,
-        descriptionLength: 0,
-      };
+		it('should identify missing meta description as an issue', () => {
+			const metadata = {
+				url: 'https://example.com',
+				pageTitle: 'Valid Title',
+				metaDescription: null,
+				metaKeywords: null,
+				h1Tags: ['Heading'],
+				imageCount: 5,
+				hasFavicon: true,
+				titleLength: 11,
+				descriptionLength: 0
+			}
 
-      const result = validateMetadata(metadata);
-      expect(result.issues).toContain('Missing meta description');
-    });
+			const result = validateMetadata(metadata)
+			expect(result.issues).toContain('Missing meta description')
+		})
 
-    it('should identify missing H1 tags as an issue', () => {
-      const metadata = {
-        url: 'https://example.com',
-        pageTitle: 'Valid Title',
-        metaDescription: 'Valid description',
-        metaKeywords: null,
-        h1Tags: [],
-        imageCount: 5,
-        hasFavicon: true,
-        titleLength: 11,
-        descriptionLength: 18,
-      };
+		it('should identify missing H1 tags as an issue', () => {
+			const metadata = {
+				url: 'https://example.com',
+				pageTitle: 'Valid Title',
+				metaDescription: 'Valid description',
+				metaKeywords: null,
+				h1Tags: [],
+				imageCount: 5,
+				hasFavicon: true,
+				titleLength: 11,
+				descriptionLength: 18
+			}
 
-      const result = validateMetadata(metadata);
-      expect(result.issues).toContain('No H1 tags found');
-    });
+			const result = validateMetadata(metadata)
+			expect(result.issues).toContain('No H1 tags found')
+		})
 
-    it('should warn about multiple H1 tags', () => {
-      const metadata = {
-        url: 'https://example.com',
-        pageTitle: 'Valid Title',
-        metaDescription: 'Valid description',
-        metaKeywords: null,
-        h1Tags: ['Heading 1', 'Heading 2', 'Heading 3'],
-        imageCount: 5,
-        hasFavicon: true,
-        titleLength: 11,
-        descriptionLength: 18,
-      };
+		it('should warn about multiple H1 tags', () => {
+			const metadata = {
+				url: 'https://example.com',
+				pageTitle: 'Valid Title',
+				metaDescription: 'Valid description',
+				metaKeywords: null,
+				h1Tags: ['Heading 1', 'Heading 2', 'Heading 3'],
+				imageCount: 5,
+				hasFavicon: true,
+				titleLength: 11,
+				descriptionLength: 18
+			}
 
-      const result = validateMetadata(metadata);
-      expect(result.warnings.some(w => w.includes('Multiple H1 tags'))).toBe(true);
-    });
+			const result = validateMetadata(metadata)
+			expect(result.warnings.some((w) => w.includes('Multiple H1 tags'))).toBe(true)
+		})
 
-    it('should have no issues for well-optimized page', () => {
-      const metadata = {
-        url: 'https://example.com',
-        pageTitle: 'Perfect Title Length For SEO Optimization Here',
-        metaDescription: 'A'.repeat(155),
-        metaKeywords: 'seo, optimization',
-        h1Tags: ['Main Heading'],
-        imageCount: 10,
-        hasFavicon: true,
-        titleLength: 46,
-        descriptionLength: 155,
-      };
+		it('should have no issues for well-optimized page', () => {
+			const metadata = {
+				url: 'https://example.com',
+				pageTitle: 'Perfect Title Length For SEO Optimization Here',
+				metaDescription: 'A'.repeat(155),
+				metaKeywords: 'seo, optimization',
+				h1Tags: ['Main Heading'],
+				imageCount: 10,
+				hasFavicon: true,
+				titleLength: 46,
+				descriptionLength: 155
+			}
 
-      const result = validateMetadata(metadata);
-      expect(result.issues).toHaveLength(0);
-      expect(result.warnings).toHaveLength(0);
-    });
-  });
-});
+			const result = validateMetadata(metadata)
+			expect(result.issues).toHaveLength(0)
+			expect(result.warnings).toHaveLength(0)
+		})
+	})
+})

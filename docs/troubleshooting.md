@@ -5,6 +5,7 @@
 ### Issue: Port 3000 Already in Use
 
 **Error Message:**
+
 ```
 Error: listen EADDRINUSE: address already in use :::3000
 ```
@@ -12,11 +13,13 @@ Error: listen EADDRINUSE: address already in use :::3000
 **Solutions:**
 
 1. **Use Different Port:**
+
 ```bash
 yarn dev -p 3001
 ```
 
 2. **Kill Process Using Port 3000:**
+
 ```bash
 # Find process
 lsof -ti:3000
@@ -34,6 +37,7 @@ taskkill /PID <PID> /F
 ### Issue: Module Not Found
 
 **Error Message:**
+
 ```
 Module not found: Can't resolve '@/components/...'
 ```
@@ -41,6 +45,7 @@ Module not found: Can't resolve '@/components/...'
 **Solutions:**
 
 1. **Reinstall Dependencies:**
+
 ```bash
 rm -rf node_modules
 rm yarn.lock
@@ -48,7 +53,8 @@ yarn install
 ```
 
 2. **Check TypeScript Config:**
-Verify `tsconfig.json` has:
+   Verify `tsconfig.json` has:
+
 ```json
 "paths": {
   "@/*": ["./*"]
@@ -56,6 +62,7 @@ Verify `tsconfig.json` has:
 ```
 
 3. **Restart Dev Server:**
+
 ```bash
 # Stop server (Ctrl+C)
 yarn dev
@@ -66,6 +73,7 @@ yarn dev
 ### Issue: OpenAI API Error
 
 **Error Message:**
+
 ```
 OpenAI API error: 401 Unauthorized
 ```
@@ -73,6 +81,7 @@ OpenAI API error: 401 Unauthorized
 **Solutions:**
 
 1. **Check API Key:**
+
 ```bash
 # Verify .env file exists
 cat .env
@@ -82,13 +91,15 @@ OPENAI_API_KEY=sk-proj...
 ```
 
 2. **Restart Server:**
-Changes to `.env` require server restart
+   Changes to `.env` require server restart
+
 ```bash
 # Stop and restart
 yarn dev
 ```
 
 3. **Verify API Key:**
+
 - Check key isn't expired
 - Ensure no extra spaces
 - Confirm key has GPT-4 access
@@ -98,6 +109,7 @@ yarn dev
 ### Issue: Database Errors
 
 **Error Message:**
+
 ```
 Error: SQLITE_CANTOPEN: unable to open database file
 ```
@@ -105,16 +117,19 @@ Error: SQLITE_CANTOPEN: unable to open database file
 **Solutions:**
 
 1. **Create Data Directory:**
+
 ```bash
 mkdir -p data
 ```
 
 2. **Check Permissions:**
+
 ```bash
 chmod 755 data
 ```
 
 3. **Reset Database:**
+
 ```bash
 rm -rf data
 # Restart server - DB will auto-create
@@ -126,6 +141,7 @@ yarn dev
 ### Issue: Scraping Timeout
 
 **Error Message:**
+
 ```
 Request timeout - the website took too long to respond
 ```
@@ -133,15 +149,17 @@ Request timeout - the website took too long to respond
 **Solutions:**
 
 1. **Try Simpler Site:**
-Test with `example.com` first
+   Test with `example.com` first
 
 2. **Increase Timeout:**
-Edit `lib/scraper.ts`:
+   Edit `lib/scraper.ts`:
+
 ```typescript
-const timeout = setTimeout(() => controller.abort(), 20000); // 20 seconds
+const timeout = setTimeout(() => controller.abort(), 20000) // 20 seconds
 ```
 
 3. **Check Internet Connection:**
+
 ```bash
 curl -I https://example.com
 ```
@@ -151,6 +169,7 @@ curl -I https://example.com
 ### Issue: Tests Failing
 
 **Error Message:**
+
 ```
 FAIL __tests__/scraper.test.ts
 ```
@@ -158,23 +177,27 @@ FAIL __tests__/scraper.test.ts
 **Solutions:**
 
 1. **Install Test Dependencies:**
+
 ```bash
 yarn install
 ```
 
 2. **Clear Jest Cache:**
+
 ```bash
 yarn jest --clearCache
 yarn test
 ```
 
 3. **Check Node Version:**
+
 ```bash
 node --version
 # Should be 18.x or higher
 ```
 
 4. **Run Specific Test:**
+
 ```bash
 yarn test scraper.test.ts
 ```
@@ -184,6 +207,7 @@ yarn test scraper.test.ts
 ### Issue: Build Fails
 
 **Error Message:**
+
 ```
 Type error: Cannot find module...
 ```
@@ -191,40 +215,42 @@ Type error: Cannot find module...
 **Solutions:**
 
 1. **Clean Build:**
+
 ```bash
 rm -rf .next
 yarn build
 ```
 
 2. **Check TypeScript:**
+
 ```bash
 yarn tsc --noEmit
 ```
 
 3. **Fix Import Paths:**
-Ensure all imports use `@/` alias correctly
+   Ensure all imports use `@/` alias correctly
 
 ---
 
 ### Issue: Styles Not Loading
 
 **Symptoms:**
+
 - No Tailwind styles
 - Plain HTML appearance
 
 **Solutions:**
 
 1. **Check Tailwind Config:**
-Verify `tailwind.config.js` content array:
+   Verify `tailwind.config.js` content array:
+
 ```javascript
-content: [
-  './app/**/*.{js,ts,jsx,tsx,mdx}',
-  './components/**/*.{js,ts,jsx,tsx,mdx}',
-]
+content: ['./app/**/*.{js,ts,jsx,tsx,mdx}', './components/**/*.{js,ts,jsx,tsx,mdx}']
 ```
 
 2. **Verify CSS Import:**
-Check `app/globals.css` has:
+   Check `app/globals.css` has:
+
 ```css
 @tailwind base;
 @tailwind components;
@@ -232,6 +258,7 @@ Check `app/globals.css` has:
 ```
 
 3. **Clear Next Cache:**
+
 ```bash
 rm -rf .next
 yarn dev
@@ -242,20 +269,23 @@ yarn dev
 ### Issue: Slow Performance
 
 **Symptoms:**
+
 - Long analysis times (> 20 seconds)
 - Sluggish UI
 
 **Solutions:**
 
 1. **Check Network:**
+
 ```bash
 curl -w "@curl-format.txt" -o /dev/null -s https://api.openai.com
 ```
 
 2. **Monitor API Calls:**
-Open DevTools Network tab, filter by API
+   Open DevTools Network tab, filter by API
 
 3. **Database Optimization:**
+
 ```bash
 # If many reports, clear old ones
 rm -rf data/*.db
@@ -266,6 +296,7 @@ rm -rf data/*.db
 ### Issue: Environment Variables Not Loading
 
 **Error Message:**
+
 ```
 OpenAI API key is undefined
 ```
@@ -273,19 +304,22 @@ OpenAI API key is undefined
 **Solutions:**
 
 1. **Create .env File:**
+
 ```bash
 cp .env.example .env
 # Edit with your API key
 ```
 
 2. **Restart Server:**
+
 ```bash
 # Always restart after .env changes
 yarn dev
 ```
 
 3. **Check Syntax:**
-No quotes needed in .env:
+   No quotes needed in .env:
+
 ```
 # Correct
 OPENAI_API_KEY=sk-proj...
@@ -301,6 +335,7 @@ OPENAI_API_KEY="sk-proj..."
 ### Enable Verbose Logging
 
 Add to `.env`:
+
 ```
 NODE_ENV=development
 DEBUG=*
@@ -309,9 +344,10 @@ DEBUG=*
 ### Check API Responses
 
 Add console logs in `app/api/analyze/route.ts`:
+
 ```typescript
-console.log('Scraped metadata:', metadata);
-console.log('AI response:', aiFeedback);
+console.log('Scraped metadata:', metadata)
+console.log('AI response:', aiFeedback)
 ```
 
 ### Inspect Database
@@ -366,12 +402,14 @@ Expected: All commands succeed
 ### Verify Functionality
 
 1. **Server Running:**
+
 ```bash
 curl http://localhost:3000
 # Should return HTML
 ```
 
 2. **API Working:**
+
 ```bash
 curl -X POST http://localhost:3000/api/analyze \
   -H "Content-Type: application/json" \
@@ -379,6 +417,7 @@ curl -X POST http://localhost:3000/api/analyze \
 ```
 
 3. **Database Created:**
+
 ```bash
 ls -la data/
 # Should show seo-reports.db
@@ -411,6 +450,7 @@ yarn dev
 ### Check System Requirements
 
 Minimum requirements:
+
 - Node.js: 18.17.0 or higher
 - Yarn: 1.22.0 or higher
 - RAM: 2GB available
@@ -438,6 +478,7 @@ If you encounter a bug:
    Look in browser console and terminal
 
 4. **Environment Info:**
+
    ```bash
    node --version
    yarn --version
@@ -451,16 +492,16 @@ If you encounter a bug:
 
 ## 🎯 Quick Fixes Cheat Sheet
 
-| Problem | Quick Fix |
-|---------|-----------|
-| Module not found | `rm -rf node_modules && yarn install` |
-| Port in use | `yarn dev -p 3001` |
-| Database error | `rm -rf data && yarn dev` |
-| Styles not working | `rm -rf .next && yarn dev` |
-| Tests failing | `yarn jest --clearCache && yarn test` |
-| API not working | Restart server after `.env` changes |
-| Build failing | `rm -rf .next && yarn build` |
-| Slow performance | Clear database or browser cache |
+| Problem            | Quick Fix                             |
+| ------------------ | ------------------------------------- |
+| Module not found   | `rm -rf node_modules && yarn install` |
+| Port in use        | `yarn dev -p 3001`                    |
+| Database error     | `rm -rf data && yarn dev`             |
+| Styles not working | `rm -rf .next && yarn dev`            |
+| Tests failing      | `yarn jest --clearCache && yarn test` |
+| API not working    | Restart server after `.env` changes   |
+| Build failing      | `rm -rf .next && yarn build`          |
+| Slow performance   | Clear database or browser cache       |
 
 ---
 
@@ -482,18 +523,21 @@ If you encounter a bug:
 If experiencing slow performance:
 
 1. **Reduce Report History:**
+
 ```typescript
 // In lib/db.ts, reduce default limit
 getAllReports: (limit = 10) => { // Changed from 50
 ```
 
 2. **Shorter Timeouts:**
+
 ```typescript
 // In lib/scraper.ts
-const timeout = setTimeout(() => controller.abort(), 5000); // Faster
+const timeout = setTimeout(() => controller.abort(), 5000) // Faster
 ```
 
 3. **Smaller AI Responses:**
+
 ```typescript
 // In lib/openai.ts
 max_tokens: 500, // Changed from 1000
@@ -525,6 +569,7 @@ If all checked, you're ready to go! 🎉
 ## 📞 Getting Help
 
 If stuck:
+
 1. Check this guide first
 2. Review error messages carefully
 3. Search error message online
