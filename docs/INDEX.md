@@ -138,7 +138,7 @@ outputs/
 2. [DEMO_GUIDE.md](DEMO_GUIDE.md) - Demo script
 3. [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md) - Final checks
 
-## 🔍 Search Guide
+## 🔍 Search Guides
 
 Looking for information about...
 

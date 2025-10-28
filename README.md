@@ -76,16 +76,16 @@ Start with [INDEX.md](INDEX.md) - your complete documentation navigator.
 
 This submission includes **comprehensive documentation**:
 
-1. **[INDEX.md](INDEX.md)** - Documentation navigator (start here!)
-2. **[FINAL_SUMMARY.txt](FINAL_SUMMARY.txt)** - Everything in one file
-3. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - One-page cheat sheet
-4. **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Architecture overview
-5. **[SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md)** - Pre-submission guide
-6. **[PRESENTATION_TIPS.md](PRESENTATION_TIPS.md)** - Interview prep
-7. **[DEMO_GUIDE.md](DEMO_GUIDE.md)** - Testing scenarios
-8. **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues
-9. **[seo-report-generator/README.md](seo-report-generator/README.md)** - Main docs
-10. **[seo-report-generator/QUICKSTART.md](seo-report-generator/QUICKSTART.md)** - Setup guide
+1. **[INDEX.md](docs/index.md)** - Documentation navigator (start here!)
+2. **[FINAL_SUMMARY.txt](docs/final-summary.txt)** - Everything in one file
+3. **[QUICK_REFERENCE.md](docs/quick-reference.md)** - One-page cheat sheet
+4. **[PROJECT_SUMMARY.md](docs/project-summary.md)** - Architecture overview
+5. **[SUBMISSION_CHECKLIST.md](docs/submission-checklist.md)** - Pre-submission guide
+6. **[PRESENTATION_TIPS.md](docs/presentation-tips.md)** - Interview prep
+7. **[DEMO_GUIDE.md](docs/demo-guide.md)** - Testing scenarios
+8. **[TROUBLESHOOTING.md](docs/troubleshooting.md)** - Common issues
+9. **[QUICKSTART.md](docs/quickstart.md)** - Setup guide
+10. **README.md** - This document is the README.md
 
 ## 🏗️ Architecture
 
