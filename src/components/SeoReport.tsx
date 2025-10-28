@@ -1,4 +1,5 @@
 import React from 'react'
+import MarkdownWithCode from './markdown-with-code'
 
 interface Metadata {
 	pageTitle: string | null
@@ -136,7 +137,9 @@ export default function SeoReport({ report, onExport }: SeoReportProps) {
 			<div className="rounded-lg bg-white p-6 shadow-md">
 				<h3 className="text-gray-900 mb-4 text-xl font-semibold">AI-Powered SEO Analysis</h3>
 				<div className="prose max-w-none">
-					<div className="text-gray-700 whitespace-pre-wrap leading-relaxed">{aiFeedback}</div>
+					<div id="parent" className="">
+						<MarkdownWithCode markdown={aiFeedback} />
+					</div>
 				</div>
 			</div>
 		</div>

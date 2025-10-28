@@ -31,3 +31,17 @@ body {
 ::-webkit-scrollbar-thumb:hover {
 	background: #555;
 }
+
+/* markdown parent div */
+.markdown-parent-element > * {
+    display: block !important;
+    margin-bottom: 20px !important; 
+} 
+
+/* for lists */
+.markdown-parent-element > ol > li {
+    display: block !important;
+    margin-bottom: 20px !important; 
+} 
+
+

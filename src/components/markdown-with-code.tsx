@@ -56,7 +56,7 @@ const MarkdownWithCode: React.FC<MarkdownWithCodeProps> = ({ markdown }) => {
 						}}
 						{...props}
 					>
-						{String(children).replace(/\n$/, '')}
+						<div id="parent">{String(children).replace(/\n$/, '')}</div>
 					</SyntaxHighlighter>
 				</div>
 			)
@@ -70,13 +70,15 @@ const MarkdownWithCode: React.FC<MarkdownWithCodeProps> = ({ markdown }) => {
 	}
 
 	return (
-		<ReactMarkdown
-			components={{
-				code: CodeBlock
-			}}
-		>
-			{markdown}
-		</ReactMarkdown>
+		<div className="markdown-parent-element">
+			<ReactMarkdown
+				components={{
+					code: CodeBlock
+				}}
+			>
+				{markdown}
+			</ReactMarkdown>
+		</div>
 	)
 }
 
