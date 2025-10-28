@@ -35,7 +35,6 @@ export default function SeoReport({ report, onExport }: SeoReportProps) {
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
-      {/* Header */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
@@ -65,7 +64,6 @@ export default function SeoReport({ report, onExport }: SeoReportProps) {
         </div>
       </div>
 
-      {/* Metadata Overview */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4">Page Metadata</h3>
         <div className="space-y-4">
@@ -141,7 +139,6 @@ export default function SeoReport({ report, onExport }: SeoReportProps) {
         </div>
       </div>
 
-      {/* AI Feedback */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4">AI-Powered SEO Analysis</h3>
         <div className="prose max-w-none">
