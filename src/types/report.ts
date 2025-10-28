@@ -15,7 +15,7 @@ export interface Report {
   url: string
   metadata: Metadata
   aiFeedback: string
-  createdAt?: string
+  createdAt?: string | Date  // <-- FIXED: allow both string and Date
   hasIssues?: boolean
 }
 

@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import clientPromise from '@/lib/db'
 import { ObjectId } from 'mongodb'
+import type { Report } from '@/types/report'
+
+// Extend Report to support ObjectId on the backend
+interface DbReport extends Omit<Report, '_id'> {
+  _id?: string | ObjectId
+}
 
 export async function GET(
   request: Request,
@@ -9,9 +15,9 @@ export async function GET(
   try {
     const client = await clientPromise
     const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
-    const collection = db.collection('reports')
+    const collection = db.collection<DbReport>('reports')
 
-    let query
+    let query: { _id: ObjectId }
     try {
       query = { _id: new ObjectId(params.id) }
     } catch {
@@ -25,7 +31,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      report: { ...report, _id: report._id.toString() },
+      report: { ...report, _id: report._id?.toString() },
     })
   } catch (error) {
     console.error('Error in GET /api/reports/[id]:', error)
@@ -40,9 +46,9 @@ export async function DELETE(
   try {
     const client = await clientPromise
     const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
-    const collection = db.collection('reports')
+    const collection = db.collection<DbReport>('reports')
 
-    let query
+    let query: { _id: ObjectId }
     try {
       query = { _id: new ObjectId(params.id) }
     } catch {

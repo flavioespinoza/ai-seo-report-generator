@@ -1,23 +1,12 @@
 import { NextResponse } from 'next/server'
 import clientPromise from '@/lib/db'
-
-interface ReportDocument {
-  id?: string
-  url: string
-  metadata?: {
-    pageTitle?: string | null
-    metaDescription?: string | null
-    metaKeywords?: string | null
-  }
-  createdAt?: Date
-  hasIssues?: boolean
-}
+import type { Report } from '@/types/report'
 
 export async function GET() {
   try {
     const client = await clientPromise
     const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
-    const collection = db.collection<ReportDocument>('reports')
+    const collection = db.collection<Report>('reports')
 
     const reports = await collection.find({}).sort({ createdAt: -1 }).toArray()
 
@@ -29,7 +18,10 @@ export async function GET() {
         url: report.url,
         pageTitle: report.metadata?.pageTitle || null,
         metaDescription: report.metadata?.metaDescription || null,
-        createdAt: report.createdAt,
+        createdAt:
+          typeof report.createdAt === 'string'
+            ? report.createdAt
+            : report.createdAt?.toISOString() ?? null,
         hasIssues: !!report.hasIssues,
       })),
     })
@@ -42,7 +34,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { report }: { report: ReportDocument } = body
+    const { report }: { report: Report } = body
 
     if (!report || !report.url) {
       return NextResponse.json({ success: false, error: 'Missing report data.' }, { status: 400 })
@@ -50,11 +42,11 @@ export async function POST(request: Request) {
 
     const client = await clientPromise
     const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
-    const collection = db.collection<ReportDocument>('reports')
+    const collection = db.collection<Report>('reports')
 
-    const newReport = {
+    const newReport: Report = {
       ...report,
-      createdAt: new Date(),
+      createdAt: new Date(), // fine now: Report allows Date
     }
 
     const result = await collection.insertOne(newReport)
