@@ -1,0 +1,28 @@
+src
+├── app
+│   ├── api
+│   │   ├── analyze
+│   │   │   └── route.ts
+│   │   └── reports
+│   │       ├──  route.ts
+│   │       ├── [id]
+│   │       │   └── route.ts
+│   │       └── route.ts
+│   ├── favicon.ico
+│   ├── layout.tsx
+│   └── page.tsx
+├── components
+│   ├── ErrorAlert.tsx
+│   ├── Icon.tsx
+│   ├── markdown-with-code.tsx
+│   ├── ReportHistory.tsx
+│   ├── SeoReport.tsx
+│   └── UrlInputForm.tsx
+├── lib
+│   ├── db.ts
+│   ├── openai.ts
+│   └── scraper.ts
+└── styles
+    └── globals.css
+
+9 directories, 17 files
