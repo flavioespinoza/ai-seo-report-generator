@@ -152,7 +152,7 @@ export default function Home() {
 
 	return (
 		<main className="min-h-screen px-4 py-12 sm:px-6 lg:px-8">
-			<div className="mx-auto max-w-7xl">
+			<div className="mx-auto max-w-3xl">
 				<div className="mb-12 text-center">
 					<h1 className="text-gray-900 mb-3 text-4xl font-bold">SEO Report Generator</h1>
 					<p className="text-gray-600 text-lg">

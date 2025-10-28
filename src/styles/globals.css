@@ -44,4 +44,9 @@ body {
     margin-bottom: 20px !important; 
 } 
 
+.markdown-parent-element > ul > li {
+    display: block !important;
+    margin-bottom: 20px !important; 
+} 
+
 
