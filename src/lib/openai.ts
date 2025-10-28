@@ -1,6 +1,8 @@
 import OpenAI from 'openai'
 import { PageMetadata, validateMetadata } from './scraper'
 
+console.log(process.env.OPENAI_API_KEY)
+
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY
 })
