@@ -4,6 +4,7 @@ import React, { useState, forwardRef, useImperativeHandle, useRef } from 'react'
 
 export interface UrlInputFormRef {
   focusInput: () => void
+  clearInput: () => void
 }
 
 interface UrlInputFormProps {
@@ -19,13 +20,23 @@ const UrlInputForm = forwardRef<UrlInputFormRef, UrlInputFormProps>(
     useImperativeHandle(ref, () => ({
       focusInput: () => {
         inputRef.current?.focus()
+      },
+      clearInput: () => {
+        setUrl('')
       }
     }))
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
-      if (!url.trim() || loading) return
-      onAnalyze(url.trim())
+      let normalizedUrl = url.trim()
+      if (!normalizedUrl || loading) return
+
+      // Automatically add https:// if missing
+      if (!/^https?:\/\//i.test(normalizedUrl)) {
+        normalizedUrl = `https://${normalizedUrl}`
+      }
+
+      onAnalyze(normalizedUrl)
     }
 
     return (
@@ -41,13 +52,12 @@ const UrlInputForm = forwardRef<UrlInputFormRef, UrlInputFormProps>(
             Website URL
           </label>
 
-          {/* Input + Button Row */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
             <div className="flex-1 min-w-0">
               <input
                 ref={inputRef}
                 id="url-input"
-                type="url"
+                type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com or example.com"
@@ -68,7 +78,6 @@ const UrlInputForm = forwardRef<UrlInputFormRef, UrlInputFormProps>(
             </div>
           </div>
 
-          {/* Description */}
           <p className="text-gray-600 mt-2 text-sm">
             Enter any website URL to receive a comprehensive SEO analysis powered by AI
           </p>

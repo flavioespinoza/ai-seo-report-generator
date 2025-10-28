@@ -143,7 +143,11 @@ export default function Home() {
   const handleNewSearch = () => {
     setCurrentReport(null)
     setError(null)
-    urlInputRef.current?.focusInput()
+    urlInputRef.current?.clearInput()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setTimeout(() => {
+      urlInputRef.current?.focusInput()
+    }, 300)
   }
 
   return (
