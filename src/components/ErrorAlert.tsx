@@ -1,47 +1,58 @@
-import React from 'react'
+import React from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { Button } from '@flavioespinoza/salsa-ui';
+import { AlertCircle, X } from 'lucide-react';
 
 interface ErrorAlertProps {
-	message: string
-	onDismiss?: () => void
+  message: string;
+  onDismiss?: () => void;
 }
 
 export default function ErrorAlert({ message, onDismiss }: ErrorAlertProps) {
-	console.log('Error Alert:', message)
-	return (
-		<div className="mx-auto w-full max-w-3xl">
-			<div className="rounded-lg border border-red-200 bg-red-50 p-4">
-				<div className="flex items-start gap-3">
-					<svg
-						className="mt-0.5 h-5 w-5 text-red-600"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2}
-							d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-					<div className="flex-1">
-						<h3 className="text-sm font-medium text-red-800">Error Balls</h3>
-						<p className="mt-1 text-sm text-red-700">{message}</p>
-					</div>
-					{onDismiss && (
-						<button onClick={onDismiss} className="text-red-400 transition hover:text-red-600">
-							<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M6 18L18 6M6 6l12 12"
-								/>
-							</svg>
-						</button>
-					)}
-				</div>
-			</div>
-		</div>
-	)
+  const [open, setOpen] = React.useState(true);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen && onDismiss) {
+      onDismiss();
+    }
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+          <div className="p-6 bg-red-100">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0" />
+                <Dialog.Title className="text-lg font-semibold text-red-600">
+                  Error
+                </Dialog.Title>
+              </div>
+              <Dialog.Close className="text-gray-400 hover:text-red-600 transition flex-shrink-0">
+                <X className="h-5 w-5 text-red-600" />
+              </Dialog.Close>
+            </div>
+
+            {/* Wrapped message in scrollable div */}
+            <Dialog.Description className="mt-4 text-sm text-red-600">
+              <div className="overflow-hidden">
+								{message}
+              </div>
+            </Dialog.Description>
+
+            <div className="mt-6 flex justify-end">
+              <Dialog.Close asChild>
+                <Button variant="default" className="bg-red-600">
+                  Close
+                </Button>
+              </Dialog.Close>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
 }
