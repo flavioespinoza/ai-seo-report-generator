@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { dbOperations } from '@/lib/db'
+import clientPromise from '@/lib/db'
 import { generateSeoFeedback } from '@/lib/openai'
 import { ScraperError, scrapeMetadata } from '@/lib/scraper'
+import type { Report } from '@/types/report'
 import { z } from 'zod'
 
 const analyzeSchema = z.object({
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
 
 		const { url } = validation.data
 
+		// Scrape metadata
 		let metadata
 		try {
 			metadata = await scrapeMetadata(url)
@@ -29,43 +31,44 @@ export async function POST(request: NextRequest) {
 			throw error
 		}
 
+		// Generate AI feedback
 		const aiFeedback = await generateSeoFeedback(metadata)
 
-		const reportId = dbOperations.createReport({
+		// Save report to MongoDB
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<Report>('reports')
+
+		const newReport: Report = {
 			url: metadata.url,
-			page_title: metadata.pageTitle,
-			meta_description: metadata.metaDescription,
-			meta_keywords: metadata.metaKeywords,
-			h1_tags: metadata.h1Tags.join(' | '),
-			image_count: metadata.imageCount,
-			has_favicon: metadata.hasFavicon ? 1 : 0,
-			ai_feedback: aiFeedback
-		})
+			metadata: {
+				pageTitle: metadata.pageTitle,
+				metaDescription: metadata.metaDescription,
+				metaKeywords: metadata.metaKeywords,
+				h1Tags: metadata.h1Tags,
+				imageCount: metadata.imageCount,
+				hasFavicon: metadata.hasFavicon,
+				titleLength: metadata.titleLength,
+				descriptionLength: metadata.descriptionLength
+			},
+			aiFeedback,
+			createdAt: new Date(),
+			hasIssues: metadata.imageCount === 0 || !metadata.hasFavicon
+		}
 
-		const report = dbOperations.getReportById(Number(reportId))
+		const result = await collection.insertOne(newReport)
+		const insertedId = result.insertedId.toString()
 
+		// Return the full report
 		return NextResponse.json({
 			success: true,
 			report: {
-				id: report?.id,
-				url: report?.url,
-				metadata: {
-					pageTitle: metadata.pageTitle,
-					metaDescription: metadata.metaDescription,
-					metaKeywords: metadata.metaKeywords,
-					h1Tags: metadata.h1Tags,
-					imageCount: metadata.imageCount,
-					hasFavicon: metadata.hasFavicon,
-					titleLength: metadata.titleLength,
-					descriptionLength: metadata.descriptionLength
-				},
-				aiFeedback,
-				createdAt: report?.created_at
+				_id: insertedId,
+				...newReport
 			}
 		})
 	} catch (error) {
 		console.error('Analysis error:', error)
-
 		return NextResponse.json(
 			{
 				error:
