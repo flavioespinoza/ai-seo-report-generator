@@ -31,3 +31,5 @@ next-env.d.ts
 *.db-wal
 
 seo-support-generator*.txt
+
+/temp
