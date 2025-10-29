@@ -1,99 +1,30 @@
-import Database from 'better-sqlite3'
-import { existsSync, mkdirSync } from 'fs'
-import { join } from 'path'
+import { MongoClient } from 'mongodb'
 
-const DB_PATH = process.env.DATABASE_PATH || './data/seo-reports.db'
-const DB_DIR = join(process.cwd(), 'data')
-
-if (!existsSync(DB_DIR)) {
-	mkdirSync(DB_DIR, { recursive: true })
+if (!process.env.MONGODB_URI) {
+	throw new Error('Please add your MongoDB URI to .env.local')
 }
 
-const db = new Database(join(process.cwd(), DB_PATH))
+const uri = process.env.MONGODB_URI
+const options = {}
 
-db.pragma('foreign_keys = ON')
+let client: MongoClient
+let clientPromise: Promise<MongoClient>
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS seo_reports (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    url TEXT NOT NULL,
-    page_title TEXT,
-    meta_description TEXT,
-    meta_keywords TEXT,
-    h1_tags TEXT,
-    image_count INTEGER DEFAULT 0,
-    has_favicon INTEGER DEFAULT 0,
-    ai_feedback TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_url ON seo_reports(url);
-  CREATE INDEX IF NOT EXISTS idx_created_at ON seo_reports(created_at);
-`)
-
-export interface SeoReport {
-	id?: number
-	url: string
-	page_title: string | null
-	meta_description: string | null
-	meta_keywords: string | null
-	h1_tags: string | null
-	image_count: number
-	has_favicon: number
-	ai_feedback: string
-	created_at?: string
+declare global {
+	// allow global var in dev mode
+	// eslint-disable-next-line no-var
+	var _mongoClientPromise: Promise<MongoClient> | undefined
 }
 
-export const dbOperations = {
-	createReport: (report: Omit<SeoReport, 'id' | 'created_at'>) => {
-		const stmt = db.prepare(`
-      INSERT INTO seo_reports (
-        url, page_title, meta_description, meta_keywords, 
-        h1_tags, image_count, has_favicon, ai_feedback
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `)
-
-		const result = stmt.run(
-			report.url,
-			report.page_title,
-			report.meta_description,
-			report.meta_keywords,
-			report.h1_tags,
-			report.image_count,
-			report.has_favicon,
-			report.ai_feedback
-		)
-
-		return result.lastInsertRowid
-	},
-
-	getReportById: (id: number): SeoReport | undefined => {
-		const stmt = db.prepare('SELECT * FROM seo_reports WHERE id = ?')
-		return stmt.get(id) as SeoReport | undefined
-	},
-
-	getAllReports: (limit = 50): SeoReport[] => {
-		const stmt = db.prepare(`
-      SELECT * FROM seo_reports 
-      ORDER BY created_at DESC 
-      LIMIT ?
-    `)
-		return stmt.all(limit) as SeoReport[]
-	},
-
-	getReportsByUrl: (url: string): SeoReport[] => {
-		const stmt = db.prepare(`
-      SELECT * FROM seo_reports 
-      WHERE url = ? 
-      ORDER BY created_at DESC
-    `)
-		return stmt.all(url) as SeoReport[]
-	},
-
-	deleteReport: (id: number) => {
-		const stmt = db.prepare('DELETE FROM seo_reports WHERE id = ?')
-		return stmt.run(id)
+if (process.env.NODE_ENV === 'development') {
+	if (!global._mongoClientPromise) {
+		client = new MongoClient(uri, options)
+		global._mongoClientPromise = client.connect()
 	}
+	clientPromise = global._mongoClientPromise
+} else {
+	client = new MongoClient(uri, options)
+	clientPromise = client.connect()
 }
 
-export default db
+export default clientPromise

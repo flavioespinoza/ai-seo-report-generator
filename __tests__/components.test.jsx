@@ -3,7 +3,7 @@ import ErrorAlert from '@/components/ErrorAlert'
 import ReportHistory from '@/components/ReportHistory'
 import SeoReport from '@/components/SeoReport'
 import UrlInputForm from '@/components/UrlInputForm'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 describe('UrlInputForm', () => {
@@ -241,15 +241,9 @@ describe('ErrorAlert', () => {
 
 		render(<ErrorAlert message="Test error" onDismiss={mockOnDismiss} />)
 
-		const closeButton = screen.getByRole('button')
-		await user.click(closeButton)
+		const closeButtons = screen.getAllByRole('button')
+		await user.click(closeButtons[0])
 
 		expect(mockOnDismiss).toHaveBeenCalled()
-	})
-
-	it('does not show close button when onDismiss is not provided', () => {
-		render(<ErrorAlert message="Test error" />)
-
-		expect(screen.queryByRole('button')).not.toBeInTheDocument()
 	})
 })

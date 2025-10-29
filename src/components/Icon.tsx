@@ -1,10 +1,5 @@
 import React from 'react'
 
-
-
 export default function Icon() {
-
-  return (
-    <div>Icon</div>
-  )
+	return <div>Icon</div>
 }

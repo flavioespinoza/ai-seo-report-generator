@@ -18,6 +18,7 @@ export interface SeoAnalysis {
 export async function generateSeoFeedback(metadata: PageMetadata): Promise<string> {
 	const { issues, warnings } = validateMetadata(metadata)
 
+	// Beginning of prompt
 	const prompt = `You are an expert SEO consultant. Analyze the following webpage metadata and provide actionable SEO improvement recommendations.
 
 Website URL: ${metadata.url}
@@ -46,6 +47,8 @@ Please provide:
 5. Specific, actionable recommendations
 
 Format your response in clear sections with bullet points where appropriate. Be specific and practical.`
+
+	// End of prompt
 
 	try {
 		const response = await openai.chat.completions.create({

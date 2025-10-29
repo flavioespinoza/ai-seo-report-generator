@@ -1,132 +1,87 @@
-import React from 'react'
+'use client'
 
-interface ReportSummary {
-	id: number
-	url: string
-	pageTitle: string | null
-	metaDescription: string | null
-	createdAt: string
-	hasIssues: boolean
-}
+import React from 'react'
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
+import type { ReportSummary } from '@/types/report'
 
 interface ReportHistoryProps {
 	reports: ReportSummary[]
-	onSelectReport: (id: number) => void
-	onDeleteReport: (id: number) => void
+	onSelectReport: (id: string | number) => Promise<void> | void
+	onDeleteReport: (id: string | number) => Promise<void> | void
 	loading?: boolean
+	activeReportId?: string | number | null
 }
 
 export default function ReportHistory({
 	reports,
 	onSelectReport,
 	onDeleteReport,
-	loading = false
+	loading = false,
+	activeReportId
 }: ReportHistoryProps) {
 	if (loading) {
 		return (
-			<div className="rounded-lg bg-white p-6 shadow-md">
-				<h3 className="text-gray-900 mb-4 text-xl font-semibold">Report History</h3>
-				<div className="flex justify-center py-8">
-					<svg className="h-8 w-8 animate-spin text-blue-600" viewBox="0 0 24 24">
-						<circle
-							className="opacity-25"
-							cx="12"
-							cy="12"
-							r="10"
-							stroke="currentColor"
-							strokeWidth="4"
-							fill="none"
-						/>
-						<path
-							className="opacity-75"
-							fill="currentColor"
-							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-						/>
-					</svg>
-				</div>
+			<div className="text-gray-500 rounded-xl bg-white p-4 text-center shadow-lg">
+				Loading report history...
 			</div>
 		)
 	}
 
-	if (reports.length === 0) {
-		return (
-			<div className="rounded-lg bg-white p-6 shadow-md">
-				<h3 className="text-gray-900 mb-4 text-xl font-semibold">Report History</h3>
-				<div className="text-gray-500 py-8 text-center">
-					<svg
-						className="text-gray-400 mx-auto mb-3 h-12 w-12"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2}
-							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-						/>
-					</svg>
-					<p>No reports yet</p>
-					<p className="mt-1 text-sm">Analyze a website to create your first report</p>
-				</div>
-			</div>
-		)
+	if (!reports || reports.length === 0) {
+		return <div className="text-gray-500 rounded-xl p-4 text-center">No reports found.</div>
+	}
+
+	const handleViewReport = async (id: string | number) => {
+		await onSelectReport(id)
+		window.scrollTo({ top: 0, behavior: 'smooth' })
 	}
 
 	return (
-		<div className="rounded-lg bg-white p-6 shadow-md">
-			<h3 className="text-gray-900 mb-4 text-xl font-semibold">
-				Report History
-				<span className="text-gray-500 ml-2 text-sm font-normal">
-					({reports.length} {reports.length === 1 ? 'report' : 'reports'})
-				</span>
-			</h3>
-			<div className="space-y-3">
-				{reports.map((report) => (
+		<div className="divide-y divide-[#bdbdbd] rounded-xl bg-white shadow-lg">
+			{reports.map((report) => {
+				const id = report._id || report.id!
+				const isActive = activeReportId === id
+
+				return (
 					<div
-						key={report.id}
-						className="border-gray-200 group rounded-lg border p-4 transition hover:border-blue-300"
+						key={id}
+						className={`flex flex-col justify-between gap-3 p-4 transition sm:flex-row sm:items-center sm:gap-4 ${
+							isActive ? 'border-l-4 border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+						}`}
 					>
-						<div className="flex items-start justify-between gap-4">
-							<button onClick={() => onSelectReport(report.id)} className="flex-1 text-left">
-								<div className="mb-1 flex items-center gap-2">
-									<h4 className="text-gray-900 font-medium transition group-hover:text-blue-600">
-										{report.pageTitle || 'Untitled Page'}
-									</h4>
-									{report.hasIssues && (
-										<span className="inline-flex items-center rounded bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
-											Issues Found
-										</span>
-									)}
-								</div>
-								<p className="text-gray-600 truncate text-sm">{report.url}</p>
-								<p className="text-gray-500 mt-1 text-xs">
-									{new Date(report.createdAt).toLocaleString()}
-								</p>
-							</button>
-							<button
-								onClick={(e) => {
-									e.stopPropagation()
-									if (confirm('Are you sure you want to delete this report?')) {
-										onDeleteReport(report.id)
-									}
-								}}
-								className="text-gray-400 p-1 transition hover:text-red-600"
-								title="Delete report"
+						<div className="min-w-0 flex-1">
+							<a
+								href={report.url.startsWith('http') ? report.url : `https://${report.url}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="block truncate text-sm font-medium text-blue-600 hover:underline"
 							>
-								<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-									/>
-								</svg>
+								{report.url}
+							</a>
+							{report.pageTitle && (
+								<p className="text-gray-600 truncate text-xs">{report.pageTitle}</p>
+							)}
+							<p className="text-gray-400 mt-1 text-xs">
+								{new Date(report.createdAt).toLocaleString()}
+							</p>
+							{report._id && (
+								<p className="text-gray-400 mt-1 font-mono text-xs">ID: {report._id}</p>
+							)}
+						</div>
+
+						<div className="flex flex-shrink-0 items-center gap-3">
+							<button
+								onClick={() => handleViewReport(id)}
+								className="rounded bg-blue-500 px-4 py-1.5 text-sm text-white transition hover:bg-blue-600"
+							>
+								View Report
 							</button>
+
+							<DeleteConfirmDialog onConfirm={() => onDeleteReport(id)} triggerLabel="Delete" />
 						</div>
 					</div>
-				))}
-			</div>
+				)
+			})}
 		</div>
 	)
 }

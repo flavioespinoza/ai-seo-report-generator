@@ -1,37 +1,62 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { dbOperations } from '@/lib/db'
+import { NextResponse } from 'next/server'
+import clientPromise from '@/lib/db'
+import type { Report } from '@/types/report'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
 	try {
-		const searchParams = request.nextUrl.searchParams
-		const url = searchParams.get('url')
-		const limit = parseInt(searchParams.get('limit') || '50')
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<Report>('reports')
 
-		let reports
-
-		if (url) {
-			reports = dbOperations.getReportsByUrl(url)
-		} else {
-			reports = dbOperations.getAllReports(limit)
-		}
-
-		const transformedReports = reports.map((report) => ({
-			id: report.id,
-			url: report.url,
-			pageTitle: report.page_title,
-			metaDescription: report.meta_description,
-			createdAt: report.created_at,
-			hasIssues: !report.page_title || !report.meta_description
-		}))
+		const reports = await collection.find({}).sort({ createdAt: -1 }).toArray()
 
 		return NextResponse.json({
 			success: true,
-			reports: transformedReports,
-			count: transformedReports.length
+			reports: reports.map((report) => ({
+				id: report.id || null,
+				_id: report._id ? report._id.toString() : null,
+				url: report.url,
+				pageTitle: report.metadata?.pageTitle || null,
+				metaDescription: report.metadata?.metaDescription || null,
+				createdAt:
+					typeof report.createdAt === 'string'
+						? report.createdAt
+						: (report.createdAt?.toISOString() ?? null),
+				hasIssues: !!report.hasIssues
+			}))
 		})
 	} catch (error) {
-		console.error('Fetch reports error:', error)
+		console.error('Error in GET /api/reports:', error)
+		return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
+	}
+}
 
-		return NextResponse.json({ error: 'Failed to fetch reports' }, { status: 500 })
+export async function POST(request: Request) {
+	try {
+		const body = await request.json()
+		const { report }: { report: Report } = body
+
+		if (!report || !report.url) {
+			return NextResponse.json({ success: false, error: 'Missing report data.' }, { status: 400 })
+		}
+
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<Report>('reports')
+
+		const newReport: Report = {
+			...report,
+			createdAt: new Date() // fine now: Report allows Date
+		}
+
+		const result = await collection.insertOne(newReport)
+
+		return NextResponse.json({
+			success: true,
+			report: { ...newReport, _id: result.insertedId.toString() }
+		})
+	} catch (error) {
+		console.error('Error in POST /api/reports:', error)
+		return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
 	}
 }
