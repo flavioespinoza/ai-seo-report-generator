@@ -2,6 +2,11 @@
 
 ## Report History Improvements
 
+- [ ] **Docs**
+  - Update README.md
+  - Update all required docs and delete not required
+
+
 - [ ] **Flow for Report History List**
   - Ensure the user can easily navigate between historical reports.
   - When a report is selected, display its details in the main report view.
