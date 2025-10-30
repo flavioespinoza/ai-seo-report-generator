@@ -13,6 +13,7 @@ src
 │   └── theme-preview-page
 │       └── page.tsx
 ├── components
+│   ├── AnalyzeLoadingModal.tsx
 │   ├── DeleteConfirmDialog.tsx
 │   ├── ErrorAlert.tsx
 │   ├── ExportButtons.tsx
@@ -39,4 +40,4 @@ src
 └── utils
     └── getTagColor.ts
 
-13 directories, 26 files
+13 directories, 27 files

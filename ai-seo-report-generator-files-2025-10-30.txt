@@ -373,6 +373,7 @@ import ReportHistory from '@/components/ReportHistory'
 import SeoReport from '@/components/SeoReport'
 import UrlInputForm, { UrlInputFormRef } from '@/components/UrlInputForm'
 import { exportToPDF, generateMarkdown } from '@/lib/export'
+import AnalyzeLoadingModal from '@/components/AnalyzeLoadingModal'
 import type { Report, ReportSummary } from '@/types/report'
 
 export default function Home() {
@@ -408,7 +409,6 @@ export default function Home() {
     }
   }
 
-  // Collect unique tags from summaries (for initial filter population)
   const extractTags = (reports: ReportSummary[]): string[] => {
     const tags = new Set<string>()
     reports.forEach(r => {
@@ -551,12 +551,15 @@ export default function Home() {
         </p>
       </header>
 
-      {/* ✅ Single, unified responsive container */}
+      {/* ✅ Main Content */}
       <main className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-8">
         {/* URL Input */}
         <div className="mt-4">
           <UrlInputForm ref={urlInputRef} onAnalyze={handleAnalyze} loading={loading} />
         </div>
+
+        {/* Modal (stays open while analyzing) */}
+        <AnalyzeLoadingModal open={loading} />
 
         {/* Error */}
         {error && (
@@ -567,7 +570,6 @@ export default function Home() {
 
         {/* Views */}
         {currentReport ? (
-          // Report View: Sidebar history + report content
           <div className="grid grid-cols-1 lg:grid-cols-[320px,1fr] gap-6 items-start">
             <aside className="min-w-0">
               <ReportHistory
@@ -590,7 +592,6 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          // List View: Filters + report list (single component)
           <div className="min-w-0">
             <ReportHistory
               onViewReport={handleViewReport}
@@ -611,18 +612,22 @@ export default function Home() {
   )
 }
 ===== src/utils/getTagColor.ts =====
-// Stronger, outlined color dots for filter list
-function getFilterDotColor(tag: string): string {
+// src/utils/getTagColor.ts
+// Modern pastel-friendly tag palette for SEO Report Generator
+
+export function getTagColor(tag: string): string {
   const lower = tag.toLowerCase()
 
+  // 🔴 Structural / critical issues
   if (
     lower.includes('h1') ||
     lower.includes('duplicate') ||
     lower.includes('missing') ||
     lower.includes('error')
   )
-    return 'bg-red-100 border-red-500'
+    return 'bg-red-500/15 text-red-700 dark:text-red-300 border border-red-400/30'
 
+  // 🟠 Needs improvement / warnings
   if (
     lower.includes('improve') ||
     lower.includes('needs') ||
@@ -631,8 +636,9 @@ function getFilterDotColor(tag: string): string {
     lower.includes('poor') ||
     lower.includes('low')
   )
-    return 'bg-orange-100 border-orange-500'
+    return 'bg-orange-400/15 text-orange-700 dark:text-orange-300 border border-orange-400/30'
 
+  // 🟢 Optimized / passed checks
   if (
     lower.includes('optimized') ||
     lower.includes('passed') ||
@@ -640,8 +646,9 @@ function getFilterDotColor(tag: string): string {
     lower.includes('good') ||
     lower.includes('valid')
   )
-    return 'bg-green-100 border-green-600'
+    return 'bg-green-500/15 text-green-700 dark:text-green-300 border border-green-400/30'
 
+  // 🔵 Metadata / SEO elements
   if (
     lower.includes('meta') ||
     lower.includes('title') ||
@@ -649,16 +656,18 @@ function getFilterDotColor(tag: string): string {
     lower.includes('keyword') ||
     lower.includes('schema')
   )
-    return 'bg-blue-100 border-blue-500'
+    return 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-400/30'
 
+  // 🟣 Accessibility
   if (
     lower.includes('accessibility') ||
     lower.includes('contrast') ||
     lower.includes('aria') ||
     lower.includes('alt')
   )
-    return 'bg-purple-100 border-purple-500'
+    return 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-400/30'
 
+  // 🟡 Business / industry categories
   if (
     lower.includes('e-commerce') ||
     lower.includes('ecommerce') ||
@@ -667,33 +676,37 @@ function getFilterDotColor(tag: string): string {
     lower.includes('blog') ||
     lower.includes('agency')
   )
-    return 'bg-yellow-100 border-yellow-500'
+    return 'bg-yellow-400/20 text-yellow-800 dark:text-yellow-300 border border-yellow-400/30'
 
+  // 🟤 Performance
   if (
     lower.includes('performance') ||
     lower.includes('speed') ||
     lower.includes('load') ||
     lower.includes('core web vitals')
   )
-    return 'bg-amber-100 border-amber-500'
+    return 'bg-amber-400/20 text-amber-700 dark:text-amber-300 border border-amber-400/30'
 
+  // 🩵 Links / external references
   if (
     lower.includes('link') ||
     lower.includes('anchor') ||
     lower.includes('nofollow') ||
     lower.includes('backlink')
   )
-    return 'bg-cyan-100 border-cyan-500'
+    return 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-400/30'
 
+  // 🩶 Content quality / readability
   if (
     lower.includes('content') ||
     lower.includes('readability') ||
     lower.includes('keyword density') ||
     lower.includes('duplicate text')
   )
-    return 'bg-slate-100 border-slate-500'
+    return 'bg-slate-400/15 text-slate-700 dark:text-slate-300 border border-slate-400/30'
 
-  return 'bg-gray-100 border-gray-400'
+  // ⚪ Default fallback
+  return 'bg-gray-400/15 text-gray-700 dark:text-gray-300 border border-gray-400/30'
 }
 ===== src/state/atoms.ts =====
 import type { ReportSummary } from '@/types/report'
@@ -751,375 +764,353 @@ export default function ExternalLink({
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useRecoilValue } from 'recoil'
-import {
-  reportHistoryState,
-  reportTagsState
-} from '@/state/atoms'
-import {
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  FileDown,
-  FileText,
-  Search,
-  Trash2
-} from 'lucide-react'
-import ExternalLink from './ExternalLink'
-import DeleteConfirmDialog from './DeleteConfirmDialog'
+import { reportHistoryState, reportTagsState } from '@/state/atoms'
 import { getTagColor } from '@/utils/getTagColor'
+import { ChevronDown, ChevronUp, Eye, FileDown, FileText, Search, Trash2 } from 'lucide-react'
+import { useRecoilValue } from 'recoil'
+import DeleteConfirmDialog from './DeleteConfirmDialog'
+import ExternalLink from './ExternalLink'
 
 interface ReportHistoryProps {
-  onViewReport: (id: string) => void
-  onDeleteReport: (id: string) => void
-  onExportPDF: (id: string) => void
-  onExportMarkdown: (id: string) => void
-  loading?: boolean
-  isReportView?: boolean
-  currentReportId?: string
+	onViewReport: (id: string) => void
+	onDeleteReport: (id: string) => void
+	onExportPDF: (id: string) => void
+	onExportMarkdown: (id: string) => void
+	loading?: boolean
+	isReportView?: boolean
+	currentReportId?: string
 }
 
 type SortField = 'createdAt' | 'url'
 type SortDirection = 'asc' | 'desc'
 
 export default function ReportHistory({
-  onViewReport,
-  onDeleteReport,
-  onExportPDF,
-  onExportMarkdown,
-  loading = false,
-  isReportView = false,
-  currentReportId
+	onViewReport,
+	onDeleteReport,
+	onExportPDF,
+	onExportMarkdown,
+	loading = false,
+	isReportView = false,
+	currentReportId
 }: ReportHistoryProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [sortField, setSortField] = useState<SortField>('createdAt')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
-  const [showFilters, setShowFilters] = useState(true)
+	const [searchQuery, setSearchQuery] = useState('')
+	const [selectedTags, setSelectedTags] = useState<string[]>([])
+	const [sortField, setSortField] = useState<SortField>('createdAt')
+	const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+	const [showFilters, setShowFilters] = useState(true)
 
-  const reports = useRecoilValue(reportHistoryState)
-  const globalTags = useRecoilValue(reportTagsState)
+	const reports = useRecoilValue(reportHistoryState)
+	const globalTags = useRecoilValue(reportTagsState)
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag)
-        ? prev.filter((t) => t !== tag)
-        : [...prev, tag]
-    )
-  }
+	const toggleTag = (tag: string) => {
+		setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+	}
 
-  const clearFilters = () => {
-    setSelectedTags([])
-    setSearchQuery('')
-  }
+	const clearFilters = () => {
+		setSelectedTags([])
+		setSearchQuery('')
+	}
 
-  const filteredReports = useMemo(() => {
-    let filtered = [...reports]
+	const filteredReports = useMemo(() => {
+		let filtered = [...reports]
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        (r) =>
-          r.url.toLowerCase().includes(q) ||
-          r.pageTitle?.toLowerCase().includes(q) ||
-          r.tags?.some((t) =>
-            t.toLowerCase().includes(q)
-          ) ||
-          r.businessCategory?.toLowerCase().includes(q)
-      )
-    }
+		if (searchQuery) {
+			const q = searchQuery.toLowerCase()
+			filtered = filtered.filter(
+				(r) =>
+					r.url.toLowerCase().includes(q) ||
+					r.pageTitle?.toLowerCase().includes(q) ||
+					r.tags?.some((t) => t.toLowerCase().includes(q)) ||
+					r.businessCategory?.toLowerCase().includes(q)
+			)
+		}
 
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter((r) =>
-        selectedTags.every(
-          (tag) =>
-            r.tags?.includes(tag) ||
-            r.businessCategory === tag
-        )
-      )
-    }
+		if (selectedTags.length > 0) {
+			filtered = filtered.filter((r) =>
+				selectedTags.every((tag) => r.tags?.includes(tag) || r.businessCategory === tag)
+			)
+		}
 
-    filtered.sort((a, b) => {
-      if (sortField === 'createdAt') {
-        const aVal = new Date(a.createdAt).getTime()
-        const bVal = new Date(b.createdAt).getTime()
-        return sortDirection === 'asc'
-          ? aVal - bVal
-          : bVal - aVal
-      }
-      return sortDirection === 'asc'
-        ? a.url.localeCompare(b.url)
-        : b.url.localeCompare(a.url)
-    })
+		filtered.sort((a, b) => {
+			if (sortField === 'createdAt') {
+				const aVal = new Date(a.createdAt).getTime()
+				const bVal = new Date(b.createdAt).getTime()
+				return sortDirection === 'asc' ? aVal - bVal : bVal - aVal
+			}
+			return sortDirection === 'asc' ? a.url.localeCompare(b.url) : b.url.localeCompare(a.url)
+		})
 
-    return filtered
-  }, [
-    reports,
-    searchQuery,
-    selectedTags,
-    sortField,
-    sortDirection
-  ])
+		return filtered
+	}, [reports, searchQuery, selectedTags, sortField, sortDirection])
 
-  const SortIcon =
-    sortDirection === 'asc' ? ChevronUp : ChevronDown
+	const SortIcon = sortDirection === 'asc' ? ChevronUp : ChevronDown
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
-      </div>
-    )
-  }
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center py-12">
+				<div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+			</div>
+		)
+	}
 
-  return (
-    <div
-      className={`flex ${
-        isReportView ? 'flex-col' : 'flex-col lg:flex-row'
-      } gap-6`}
-    >
-      {/* Sidebar Filters (hidden in report view) */}
-      {!isReportView && (
-        <aside className="w-full lg:w-[320px] xl:w-[340px] flex-shrink-0">
-          <div className="w-full rounded-lg bg-white p-4 shadow-md">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold">
-                Filters
-              </h2>
-              {(selectedTags.length > 0 ||
-                searchQuery) && (
-                <button
-                  onClick={clearFilters}
-                  className='btn-primary'
-                >
-                  Clear All
-                </button>
-              )}
-            </div>
+	return (
+		<div className={`flex ${isReportView ? 'flex-col' : 'flex-col lg:flex-row'} gap-6`}>
+			{/* Sidebar Filters */}
+			{!isReportView && (
+				<aside className="w-full flex-shrink-0 lg:w-[320px] xl:w-[340px]">
+					<div className="card p-4">
+						<div className="mb-4 flex items-center justify-between">
+							<h2 className="text-lg font-bold">Filters</h2>
+							{(selectedTags.length > 0 || searchQuery) && (
+								<button onClick={clearFilters} className="btn-primary text-[11px] py-2">
+									Clear All
+								</button>
+							)}
+						</div>
 
-            {/* Tags */}
-            <div className="space-y-3">
-              <button
-                onClick={() =>
-                  setShowFilters(!showFilters)
-                }
-                className='btn-outline'
-              >
-                <span>Tags</span>
-                {showFilters ? (
-                  <ChevronUp size={16} />
-                ) : (
-                  <ChevronDown size={16} />
-                )}
-              </button>
+						<div className="space-y-3">
+							<button
+								onClick={() => setShowFilters(!showFilters)}
+								className="btn-outline flex w-full items-center justify-between"
+							>
+								<span>Tags</span>
+								{showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+							</button>
 
-              {showFilters && (
-                <div className="max-h-96 space-y-2 overflow-y-auto">
-                  {globalTags.length === 0 ? (
-                    <p className="px-2 text-sm italic text-gray-400">
-                      No tags yet...
-                    </p>
-                  ) : (
-                    globalTags.map((tag) => {
-                      const colorClass = getTagColor(tag)
-                      const bgClass = colorClass.split(' ')[0]
-                      return (
-                        <label
-                          key={tag}
-                          className="flex cursor-pointer items-center justify-between rounded p-2 text-xs hover:bg-gray-50"
-                        >
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={selectedTags.includes(tag)}
-                              onChange={() => toggleTag(tag)}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-gray-700">
-                              {tag}
-                            </span>
-                          </div>
-                          <span
-                            className={`h-3 w-3 rounded-full border border-gray-200 ${bgClass}`}
-                          />
-                        </label>
-                      )
-                    })
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </aside>
-      )}
+							{showFilters && (
+								<div className="max-h-96 space-y-2 overflow-y-auto">
+									{globalTags.length === 0 ? (
+										<p className="px-2 text-sm italic text-gray-400">No tags yet...</p>
+									) : (
+										globalTags.map((tag) => {
+											const colorClass = getFilterDotColor(tag)
+											const isSelected = selectedTags.includes(tag)
 
-      {/* Main Report Table */}
-      <div className="min-w-0 flex-1">
-        {/* Search */}
-        <div className="mb-4 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400"
-              size={20}
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) =>
-                setSearchQuery(e.target.value)
-              }
-              placeholder="Search reports..."
-              className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
+											return (
+												<label
+													key={tag}
+													className={`flex cursor-pointer items-center justify-between rounded p-2 text-xs transition-colors ${
+														isSelected ? 'active-filter' : 'hover:bg-gray-50 dark:hover:bg-zinc-800'
+													}`}
+												>
+													<div className="flex items-center gap-2">
+														<input
+															type="checkbox"
+															checked={isSelected}
+															onChange={() => toggleTag(tag)}
+															className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+														/>
+														<span className="text-gray-700 dark:text-gray-300">{tag}</span>
+													</div>
+													<span className={`filter-dot ${colorClass}`} />
+												</label>
+											)
+										})
+									)}
+								</div>
+							)}
+						</div>
+					</div>
+				</aside>
+			)}
 
-        {/* Table */}
-        {filteredReports.length === 0 ? (
-          <div className="rounded-lg bg-white p-8 text-center text-gray-500 shadow-md">
-            No reports found.
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-lg bg-white shadow-md">
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-fixed">
-                <thead className="border-b border-gray-200 bg-gray-50">
-                  <tr>
-                    <th
-                      className="w-[60%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700"
-                      onClick={() => setSortField('url')}
-                    >
-                      <div className="flex items-center gap-1 cursor-pointer hover:text-blue-600">
-                        Report
-                        {sortField === 'url' && (
-                          <SortIcon size={14} />
-                        )}
-                      </div>
-                    </th>
-                    <th
-                      className="w-[20%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700"
-                      onClick={() => setSortField('createdAt')}
-                    >
-                      <div className="flex items-center gap-1 cursor-pointer hover:text-blue-600">
-                        Created
-                        {sortField === 'createdAt' && (
-                          <SortIcon size={14} />
-                        )}
-                      </div>
-                    </th>
-                    <th className="w-[20%] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-700">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
+			{/* Main Report Table */}
+			<div className="min-w-0 flex-1">
+				{/* Search */}
+				<div className="mb-4 flex items-center gap-2">
+					<div className="relative flex-1">
+						<Search
+							className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400"
+							size={20}
+						/>
+						<input
+							type="text"
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							placeholder="Search reports..."
+							className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+						/>
+					</div>
+				</div>
 
-                <tbody className="divide-y divide-gray-200">
-                  {filteredReports.map((r) => {
-                    const id = r._id || ''
-                    const active =
-                      id === currentReportId
+				{/* Table */}
+				{filteredReports.length === 0 ? (
+					<div className="card p-8 text-center text-gray-500">No reports found.</div>
+				) : (
+					<div className="rounded-lg bg-white shadow-md">
+						<div className="overflow-x-auto">
+							<table className="min-w-full table-fixed">
+								<thead>
+									<tr>
+										<th
+											className="w-[60%] cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700"
+											onClick={() => setSortField('url')}
+										>
+											<div className="flex items-center gap-1 hover:text-blue-600">
+												Report
+												{sortField === 'url' && <SortIcon size={14} />}
+											</div>
+										</th>
+										<th
+											className="w-[20%] cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700"
+											onClick={() => setSortField('createdAt')}
+										>
+											<div className="flex items-center gap-1 hover:text-blue-600">
+												Created
+												{sortField === 'createdAt' && <SortIcon size={14} />}
+											</div>
+										</th>
+										<th className="w-[20%] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-700">
+											Actions
+										</th>
+									</tr>
+								</thead>
 
-                    return (
-                      <tr
-                        key={id}
-                        className={`hover:bg-gray-50 ${
-                          active ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        {/* 🧱 Report Column */}
-                        <td className="px-4 py-3 align-top">
-                          <div className="flex flex-col gap-1">
-                            <ExternalLink
-                              href={r.url}
-                              target="_blank"
-                              className="truncate text-sm font-medium text-blue-600 hover:text-blue-800"
-                            >
-                              {r.url}
-                            </ExternalLink>
-                            <div className="text-xs text-gray-500 line-clamp-2">
-                              {r.pageTitle || '(No title)'}
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {r.tags?.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className={`inline-block rounded border px-2 py-1 text-[11px] font-semibold ${getTagColor(
-                                    tag
-                                  )}`}
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                              {r.businessCategory && (
-                                <span
-                                  className={`inline-block rounded border px-2 py-1 text-[11px] font-semibold ${getTagColor(
-                                    r.businessCategory
-                                  )}`}
-                                >
-                                  {r.businessCategory}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
+								<tbody className="divide-y divide-gray-200">
+									{filteredReports.map((r) => {
+										const id = r._id || ''
+										const active = id === currentReportId
 
-                        {/* 🗓️ Created Column */}
-                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-                          {new Date(
-                            r.createdAt
-                          ).toLocaleDateString()}
-                        </td>
+										return (
+											<tr
+												key={id}
+												className={`hover:bg-gray-50 dark:hover:bg-zinc-800 ${
+													active ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+												}`}
+											>
+												{/* 🧱 Report Column */}
+												<td className="px-4 py-3 align-top">
+													<div className="flex flex-col gap-1">
+														<ExternalLink
+															href={r.url}
+															target="_blank"
+															className="truncate text-sm font-medium text-blue-600 hover:text-blue-800"
+														>
+															{r.url}
+														</ExternalLink>
+														<div className="line-clamp-2 text-xs text-gray-500">
+															{r.pageTitle || '(No title)'}
+														</div>
+														<div className="mt-2 flex flex-wrap gap-1">
+															{r.tags?.map((tag) => (
+																<span
+																	key={tag}
+																	className={`inline-block rounded border px-2 py-1 text-[11px] font-semibold ${getTagColor(
+																		tag
+																	)}`}
+																>
+																	{tag}
+																</span>
+															))}
+															{r.businessCategory && (
+																<span
+																	className={`inline-block rounded border px-2 py-1 text-[11px] font-semibold ${getTagColor(
+																		r.businessCategory
+																	)}`}
+																>
+																	{r.businessCategory}
+																</span>
+															)}
+														</div>
+													</div>
+												</td>
 
-                        {/* ⚙️ Actions Column */}
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end gap-2 flex-wrap">
-                            <DeleteConfirmDialog
-                              onConfirm={() =>
-                                onDeleteReport(id)
-                              }
-                              trigger={
-                                <button className="btn-icon text-red-600">
-                                  <Trash2 size={18} />
-                                </button>
-                              }
-                            />
-                            <button
-                              onClick={() =>
-                                onExportPDF(id)
-                              }
-                              className="btn-icon text-gray-600"
-                            >
-                              <FileDown size={18} />
-                            </button>
-                            <button
-                              onClick={() =>
-                                onExportMarkdown(id)
-                              }
-                              className="btn-icon"
-                            >
-                              <FileText size={18} />
-                            </button>
-                            <button
-                              onClick={() =>
-                                onViewReport(id)
-                              }
-                              className="btn-icon text-blue-600"
-                            >
-                              <Eye size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+												{/* 🗓️ Created Column */}
+												<td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+													{new Date(r.createdAt).toLocaleDateString()}
+												</td>
+
+												{/* ⚙️ Actions Column */}
+												<td className="px-4 py-3 text-right">
+													<div className="mt-6 flex flex-wrap justify-end gap-2">
+														<div className="tooltip">
+															<button
+																type="button"
+																className="btn-icon text-red-600"
+																onClick={() => onDeleteReport(id)}
+															>
+																<Trash2 size={18} />
+															</button>
+															<span className="tooltip-text">Delete Report</span>
+														</div>
+
+														<div className="tooltip">
+															<button
+																type="button"
+																onClick={() => {
+																	onViewReport(id)
+																	setTimeout(() => onExportPDF(id), 400)
+																}}
+																className="btn-icon text-gray-600"
+															>
+																<FileDown size={18} />
+															</button>
+															<span className="tooltip-text">Download PDF</span>
+														</div>
+
+														<div className="tooltip">
+															<button
+																type="button"
+																onClick={() => {
+																	onViewReport(id)
+																	setTimeout(() => onExportMarkdown(id), 400)
+																}}
+																className="btn-icon text-gray-600"
+															>
+																<FileText size={18} />
+															</button>
+															<span className="tooltip-text">Download Markdown</span>
+														</div>
+
+														<div className="tooltip">
+															<button
+																type="button"
+																onClick={() => onViewReport(id)}
+																className="btn-icon text-blue-600"
+															>
+																<Eye size={18} />
+															</button>
+															<span className="tooltip-text">View Report</span>
+														</div>
+													</div>
+												</td>
+											</tr>
+										)
+									})}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
+	)
+}
+
+/* ---------------------------------
+   Helper: match tag keyword to .filter-dot-* class
+----------------------------------- */
+function getFilterDotColor(tag: string): string {
+	const lower = tag.toLowerCase()
+
+	if (lower.includes('error') || lower.includes('missing') || lower.includes('duplicate'))
+		return 'filter-dot-red'
+	if (lower.includes('improve') || lower.includes('slow') || lower.includes('warning'))
+		return 'filter-dot-orange'
+	if (lower.includes('optimized') || lower.includes('good') || lower.includes('valid'))
+		return 'filter-dot-green'
+	if (lower.includes('meta') || lower.includes('title') || lower.includes('schema'))
+		return 'filter-dot-blue'
+	if (lower.includes('accessibility') || lower.includes('contrast') || lower.includes('aria'))
+		return 'filter-dot-purple'
+	if (lower.includes('ecommerce') || lower.includes('agency') || lower.includes('blog'))
+		return 'filter-dot-yellow'
+	if (lower.includes('performance') || lower.includes('speed') || lower.includes('load'))
+		return 'filter-dot-amber'
+	if (lower.includes('link') || lower.includes('backlink') || lower.includes('anchor'))
+		return 'filter-dot-cyan'
+	if (lower.includes('content') || lower.includes('readability')) return 'filter-dot-slate'
+	return 'filter-dot-gray'
 }
 ===== src/components/ExportButtons.tsx =====
 // src/components/ExportButtons.tsx
@@ -1181,91 +1172,125 @@ import { RecoilRoot } from 'recoil'
 export default function RecoilProvider({ children }: { children: ReactNode }) {
 	return <RecoilRoot>{children}</RecoilRoot>
 }
+===== src/components/AnalyzeLoadingModal.tsx =====
+'use client'
+
+import * as Dialog from '@radix-ui/react-dialog'
+import { Loader2 } from 'lucide-react'
+
+interface AnalyzeLoadingModalProps {
+  open: boolean
+}
+
+export default function AnalyzeLoadingModal({ open }: AnalyzeLoadingModalProps) {
+  return (
+    <Dialog.Root open={open}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]" />
+        <Dialog.Content
+          className="fixed top-1/2 left-1/2 z-[101] w-[90%] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 text-center shadow-lg dark:bg-zinc-900"
+        >
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-[var(--primary)]" />
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              Analyzing SEO Report
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              This can take up to a minute. Please wait while we analyze your page...
+            </p>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  )
+}
 ===== src/components/UrlInputForm.tsx =====
 'use client'
 
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 
 export interface UrlInputFormRef {
-	focusInput: () => void
-	clearInput: () => void
+  focusInput: () => void
+  clearInput: () => void
 }
 
 interface UrlInputFormProps {
-	onAnalyze: (url: string) => void
-	loading?: boolean
+  onAnalyze: (url: string) => void
+  loading?: boolean
 }
 
 const UrlInputForm = forwardRef<UrlInputFormRef, UrlInputFormProps>(
-	({ onAnalyze, loading = false }, ref) => {
-		const [url, setUrl] = useState('')
-		const inputRef = useRef<HTMLInputElement>(null)
+  ({ onAnalyze, loading = false }, ref) => {
+    const [url, setUrl] = useState('')
+    const inputRef = useRef<HTMLInputElement>(null)
 
-		useImperativeHandle(ref, () => ({
-			focusInput: () => {
-				inputRef.current?.focus()
-			},
-			clearInput: () => {
-				setUrl('')
-			}
-		}))
+    useImperativeHandle(ref, () => ({
+      focusInput: () => {
+        inputRef.current?.focus()
+      },
+      clearInput: () => {
+        setUrl('')
+      },
+    }))
 
-		const handleSubmit = (e: React.FormEvent) => {
-			e.preventDefault()
-			let normalizedUrl = url.trim()
-			if (!normalizedUrl || loading) return
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault()
+      let normalizedUrl = url.trim()
+      if (!normalizedUrl || loading) return
 
-			// Automatically add https:// if missing
-			if (!/^https?:\/\//i.test(normalizedUrl)) {
-				normalizedUrl = `https://${normalizedUrl}`
-			}
+      if (!/^https?:\/\//i.test(normalizedUrl)) {
+        normalizedUrl = `https://${normalizedUrl}`
+      }
 
-			onAnalyze(normalizedUrl)
-		}
+      onAnalyze(normalizedUrl)
+    }
 
-		return (
-			<form
-				onSubmit={handleSubmit}
-				className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md"
-			>
-				<div>
-					<label htmlFor="url-input" className="text-gray-900 mb-2 block text-lg font-semibold">
-						Website URL
-					</label>
+    return (
+      <form
+        onSubmit={handleSubmit}
+        className="card p-6 flex flex-col gap-5"
+      >
+        <div>
+          <label
+            htmlFor="url-input"
+            className="block mb-2 text-base font-semibold text-[var(--foreground)]"
+          >
+            Website URL
+          </label>
 
-					<div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-						<div className="min-w-0 flex-1">
-							<input
-								ref={inputRef}
-								id="url-input"
-								type="text"
-								value={url}
-								onChange={(e) => setUrl(e.target.value)}
-								placeholder="https://example.com or example.com"
-								className="text-gray-800 inset-shadow-sm inset-shadow-blue-500 w-full rounded-md border border-[#bdbdbd] bg-blue-100 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								disabled={loading}
-								required
-							/>
-						</div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+            <div className="min-w-0 flex-1">
+              <input
+                ref={inputRef}
+                id="url-input"
+                type="text"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com or example.com"
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--muted)] px-4 py-3 text-[var(--foreground)] placeholder-gray-400 focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] dark:bg-zinc-800 dark:placeholder-gray-500"
+                disabled={loading}
+                required
+              />
+            </div>
 
-						<div className="mt-3 flex-shrink-0 sm:mt-0">
-							<button
-								type="submit"
-								disabled={loading}
-								className='btn-primary'
-							>
-								{loading ? 'Analyzing...' : 'Analyze SEO'}
-							</button>
-						</div>
-					</div>
+            <div className="mt-3 flex-shrink-0 sm:mt-0">
+              <button
+                type="submit"
+                disabled={loading}
+                className={`btn-primary w-full sm:w-auto ${loading ? 'opacity-80 cursor-not-allowed' : ''}`}
+              >
+                {loading ? 'Analyzing...' : 'Analyze SEO'}
+              </button>
+            </div>
+          </div>
 
-					<p className="text-gray-600 mt-2 text-sm">
-						Enter any website URL to receive a comprehensive SEO analysis powered by AI
-					</p>
-				</div>
-			</form>
-		)
-	}
+          <p className="mt-3 text-sm text-[var(--muted-foreground)]">
+            Enter any website URL to receive a comprehensive SEO analysis powered by AI.
+          </p>
+        </div>
+      </form>
+    )
+  }
 )
 
 UrlInputForm.displayName = 'UrlInputForm'
@@ -1416,6 +1441,7 @@ export default MarkdownWithCode
 import { Report } from '@/types/report'
 import { getTagColor } from '@/utils/getTagColor'
 import { ArrowLeft, FileDown, FileText } from 'lucide-react'
+import MarkdownWithCode from './MarkdownWithCode'
 
 interface SeoReportProps {
 	report: Report
@@ -1433,36 +1459,27 @@ export default function SeoReport({
 	if (!report) return null
 
 	return (
-		<div className="w-full rounded-lg bg-white p-6 shadow-md sm:p-8">
+		<div id='seo-report-content' className="w-full rounded-lg bg-white p-6 shadow-md sm:p-8">
 			{/* 🧭 Header Section */}
 			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
-					<button
-						onClick={onBackToList}
-						className='btn-outline'
-					>
+					<button onClick={onBackToList} className="btn-danger text-[11px] py-2">
 						<ArrowLeft size={16} />
 						Back to List
 					</button>
 
-					<h2 className="text-gray-900 mt-3 break-words text-2xl font-bold">
+					<h2 className="mt-3 break-words text-2xl font-bold text-gray-900">
 						{report.pageTitle || '(Untitled Page)'}
 					</h2>
-					<p className="text-gray-600 mt-1 break-all text-sm">{report.url}</p>
+					<p className="mt-1 break-all text-sm text-gray-600">{report.url}</p>
 				</div>
 
 				<div className="flex flex-wrap gap-2">
-					<button
-						onClick={onExportPDF}
-						className='btn-danger'
-					>
+					<button onClick={onExportPDF} className="btn-danger">
 						<FileDown size={16} />
 						PDF
 					</button>
-					<button
-						onClick={onExportMarkdown}
-						className='btn-primary'
-					>
+					<button onClick={onExportMarkdown} className="btn-primary">
 						<FileText size={16} />
 						Markdown
 					</button>
@@ -1496,8 +1513,8 @@ export default function SeoReport({
 
 			{/* 📊 Metadata Section */}
 			<section className="mb-8">
-				<h3 className="text-gray-900 mb-3 text-lg font-semibold">Metadata Overview</h3>
-				<div className="text-gray-700 space-y-2 text-sm">
+				<h3 className="mb-3 text-lg font-semibold text-gray-900">Metadata Overview</h3>
+				<div className="space-y-2 text-sm text-gray-700">
 					<p>
 						<strong>Title:</strong> {report.metadata?.pageTitle || 'N/A'}
 					</p>
@@ -1521,11 +1538,11 @@ export default function SeoReport({
 
 			{/* 🤖 AI Feedback */}
 			<section>
-				<h3 className="text-gray-900 mb-3 text-lg font-semibold">AI Feedback</h3>
-				<div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
-					{typeof report.aiFeedback === 'string'
-						? report.aiFeedback
-						: JSON.stringify(report.aiFeedback, null, 2)}
+				<h3 className="mb-3 text-lg font-semibold text-gray-900">AI Feedback</h3>
+				<div>
+					{typeof report.aiFeedback === 'string' && (
+						<MarkdownWithCode markdown={report.aiFeedback} />
+					)}
 				</div>
 			</section>
 		</div>

@@ -4,7 +4,7 @@ import clientPromise from '@/lib/db'
 export async function GET() {
 	try {
 		const client = await clientPromise
-		const db = client.db(process.env.MONGODB_DB || 'seo-reports')
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
 
 		// ✅ include pageTitle so the report history list can show it
 		const reports = await db
