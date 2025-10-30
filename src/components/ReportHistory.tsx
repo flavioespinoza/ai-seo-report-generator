@@ -99,7 +99,7 @@ export default function ReportHistory({
 						<div className="mb-4 flex items-center justify-between">
 							<h2 className="text-lg font-bold">Filters</h2>
 							{(selectedTags.length > 0 || searchQuery) && (
-								<button onClick={clearFilters} className="btn-primary">
+								<button onClick={clearFilters} className="btn-primary text-[11px] py-2">
 									Clear All
 								</button>
 							)}

@@ -8,6 +8,7 @@ import ReportHistory from '@/components/ReportHistory'
 import SeoReport from '@/components/SeoReport'
 import UrlInputForm, { UrlInputFormRef } from '@/components/UrlInputForm'
 import { exportToPDF, generateMarkdown } from '@/lib/export'
+import AnalyzeLoadingModal from '@/components/AnalyzeLoadingModal'
 import type { Report, ReportSummary } from '@/types/report'
 
 export default function Home() {
@@ -43,7 +44,6 @@ export default function Home() {
     }
   }
 
-  // Collect unique tags from summaries (for initial filter population)
   const extractTags = (reports: ReportSummary[]): string[] => {
     const tags = new Set<string>()
     reports.forEach(r => {
@@ -186,12 +186,15 @@ export default function Home() {
         </p>
       </header>
 
-      {/* ✅ Single, unified responsive container */}
+      {/* ✅ Main Content */}
       <main className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-8">
         {/* URL Input */}
         <div className="mt-4">
           <UrlInputForm ref={urlInputRef} onAnalyze={handleAnalyze} loading={loading} />
         </div>
+
+        {/* Modal (stays open while analyzing) */}
+        <AnalyzeLoadingModal open={loading} />
 
         {/* Error */}
         {error && (
@@ -202,7 +205,6 @@ export default function Home() {
 
         {/* Views */}
         {currentReport ? (
-          // Report View: Sidebar history + report content
           <div className="grid grid-cols-1 lg:grid-cols-[320px,1fr] gap-6 items-start">
             <aside className="min-w-0">
               <ReportHistory
@@ -225,7 +227,6 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          // List View: Filters + report list (single component)
           <div className="min-w-0">
             <ReportHistory
               onViewReport={handleViewReport}

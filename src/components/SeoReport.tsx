@@ -25,7 +25,7 @@ export default function SeoReport({
 			{/* 🧭 Header Section */}
 			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
-					<button onClick={onBackToList} className="btn-danger text-[8px] py-2">
+					<button onClick={onBackToList} className="btn-danger text-[11px] py-2">
 						<ArrowLeft size={16} />
 						Back to List
 					</button>
