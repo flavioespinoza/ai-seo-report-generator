@@ -133,48 +133,40 @@
 		@apply rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] shadow-sm transition-colors duration-300;
 	}
 
+	/* Buttons – Tailwind v3 compatible, matches prototypes */
+	.btn {
+		@apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-medium shadow-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2;
+	}
 
+	/* Solid primary button */
+	.btn-primary {
+		@apply btn bg-[var(--primary)] text-[var(--primary-foreground)] hover:brightness-90 active:brightness-75;
+	}
 
+	/* Solid secondary button */
+	.btn-secondary {
+		@apply btn bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:brightness-90 active:brightness-75;
+	}
 
+	/* Transparent outlined button */
+	.btn-outline {
+		@apply btn border border-[var(--border)] bg-transparent text-[var(--foreground)] hover:bg-gray-50 dark:hover:bg-zinc-800;
+	}
 
+	/* Transparent ghost button */
+	.btn-ghost {
+		@apply btn bg-transparent text-[var(--foreground)] hover:bg-gray-100 dark:hover:bg-zinc-800;
+	}
 
-/* Buttons – Tailwind v3 compatible, matches prototypes */
-.btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 px-5 py-2.5 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2;
-}
+	/* Destructive / critical button */
+	.btn-danger {
+		@apply btn bg-[var(--destructive)] text-[var(--destructive-foreground)] hover:brightness-90 active:brightness-75;
+	}
 
-/* Solid primary button */
-.btn-primary {
-  @apply btn bg-[var(--primary)] text-[var(--primary-foreground)] hover:brightness-90 active:brightness-75;
-}
-
-/* Solid secondary button */
-.btn-secondary {
-  @apply btn bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:brightness-90 active:brightness-75;
-}
-
-/* Transparent outlined button */
-.btn-outline {
-  @apply btn border border-[var(--border)] bg-transparent text-[var(--foreground)] hover:bg-gray-50 dark:hover:bg-zinc-800;
-}
-
-/* Transparent ghost button */
-.btn-ghost {
-  @apply btn bg-transparent text-[var(--foreground)] hover:bg-gray-100 dark:hover:bg-zinc-800;
-}
-
-/* Destructive / critical button */
-.btn-danger {
-  @apply btn bg-[var(--destructive)] text-[var(--destructive-foreground)] hover:brightness-90 active:brightness-75;
-}
-
-/* Icon-only buttons (for toolbar actions) */
-.btn-icon {
-  @apply inline-flex items-center justify-center rounded-full p-2 text-[var(--foreground)] hover:bg-gray-100 dark:hover:bg-zinc-800 focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2;
-}
-
-
-
+	/* Icon-only buttons (for toolbar actions) */
+	.btn-icon {
+		@apply inline-flex items-center justify-center rounded-full p-2 text-[var(--foreground)] hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 dark:hover:bg-zinc-800;
+	}
 
 	/* Badges */
 	.badge {
@@ -244,7 +236,6 @@
 	}
 }
 
-
 /* markdown parent div */
 .markdown-parent-element > * {
 	display: block !important;
@@ -260,4 +251,24 @@
 .markdown-parent-element > ul > li {
 	display: block !important;
 	margin-bottom: 20px !important;
+}
+
+/* =============================
+   🪶 Tooltips (anchored top-right)
+   ============================= */
+.tooltip {
+  @apply relative inline-block;
+}
+
+.tooltip-text {
+  @apply invisible absolute -top-4 right-full rounded-md bg-gray-800 px-2.5 py-1 text-xs text-white opacity-0 transition-all duration-150 whitespace-nowrap translate-y-[-4px];
+}
+
+.tooltip:hover .tooltip-text,
+.tooltip:focus-within .tooltip-text {
+  @apply visible opacity-100 translate-y-0;
+}
+
+.dark .tooltip-text {
+  @apply bg-zinc-700 text-gray-100;
 }

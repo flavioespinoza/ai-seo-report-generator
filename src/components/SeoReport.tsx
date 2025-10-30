@@ -21,7 +21,7 @@ export default function SeoReport({
 	if (!report) return null
 
 	return (
-		<div className="w-full rounded-lg bg-white p-6 shadow-md sm:p-8">
+		<div id='seo-report-content' className="w-full rounded-lg bg-white p-6 shadow-md sm:p-8">
 			{/* 🧭 Header Section */}
 			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
