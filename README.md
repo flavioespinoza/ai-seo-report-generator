@@ -147,8 +147,16 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 Create a `.env.local` file at the root with the following variables:
 
 ```bash
-OPENAI_API_KEY=your_openai_api_key
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+# OpenAI API Key
+# Get your API key from: https://platform.openai.com/api-keys
+OPENAI_API_KEY=<your_openai_api_key>
+
+# MongoDB Configuration
+# Set up your database at: https://www.mongodb.com/cloud/atlas/register
+# MongoDB connection string
+MONGODB_URI=mongodb+srv://<your_database_username>:<your_database_password>@cluster.mongodb.net/<your_database_name>?retryWrites=true&w=majority
+# MongoDB database name
+MONGODB_DB=<your_database_name>
 ```
 
 Adjust as needed for your environment.
