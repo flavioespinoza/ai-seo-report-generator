@@ -117,7 +117,7 @@ src/
 2. Install dependencies:
 
    ```bash
-   npm install
+   yarn install
    ```
 
 3. Set up your environment variables (see below).
@@ -126,10 +126,10 @@ src/
 
 ## Development
 
-Run the project locally:
+ the project locally:
 
 ```bash
-npm run dev
+yarn dev
 ```
 
 The app will be available at [http://localhost:3000](http://localhost:3000).
@@ -153,10 +153,11 @@ Adjust as needed for your environment.
 
 | Command         | Description                 |
 | --------------- | --------------------------- |
-| `npm run dev`   | Start development server    |
-| `npm run build` | Build the production bundle |
-| `npm run start` | Serve the production build  |
-| `npm run lint`  | Run ESLint checks           |
+| `yarn dev`   | Start development server    |
+| `yarn  build` | Build the production bundle |
+| `yarn  start` | Serve the production build  |
+| `yarn  clean` | Format all code with Prettier |
+| `yarn  lint`  |  ESLint checks           |
 
 ---
 
@@ -203,6 +204,7 @@ Global theming is handled in `globals.css` using Tailwind’s `@layer` directive
 The `export.ts` module handles:
 
 * **PDF Export:** Converts the current `#seo-report-content` DOM element to a PDF using `html2canvas` and `jsPDF`.
+
 * **Markdown Export:** Generates a clean Markdown document from the report’s structured data.
 
 All exports are named dynamically using the target site’s domain and a UTC timestamp.
@@ -221,3 +223,4 @@ All exports are named dynamically using the target site’s domain and a UTC tim
 ## License
 
 This project is open-source and available under the [MIT License](LICENSE).
+ 
