@@ -5,21 +5,27 @@ It features a modern, responsive UI, an accessible dark/light theme, and integra
 
 ---
 
+## Live Demo
+
+- https://ai-seo-report-generator.vercel.app/
+
+---
+
 ## Table of Contents
 
-* [Overview](#overview)
-* [Features](#features)
-* [Tech Stack](#tech-stack)
-* [Project Structure](#project-structure)
-* [Installation](#installation)
-* [Development](#development)
-* [Environment Variables](#environment-variables)
-* [Scripts](#scripts)
-* [Theming and Design](#theming-and-design)
-* [Core Components](#core-components)
-* [Export and Report Handling](#export-and-report-handling)
-* [Future Improvements](#future-improvements)
-* [License](#license)
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Development](#development)
+- [Environment Variables](#environment-variables)
+- [Scripts](#scripts)
+- [Theming and Design](#theming-and-design)
+- [Core Components](#core-components)
+- [Export and Report Handling](#export-and-report-handling)
+- [Future Improvements](#future-improvements)
+- [License](#license)
 
 ---
 
@@ -27,11 +33,11 @@ It features a modern, responsive UI, an accessible dark/light theme, and integra
 
 This application allows users to input a website URL and receive a complete SEO analysis that includes:
 
-* Metadata validation
-* H1 tag checks
-* Favicon and image presence
-* Performance and accessibility review
-* AI-generated optimization feedback
+- Metadata validation
+- H1 tag checks
+- Favicon and image presence
+- Performance and accessibility review
+- AI-generated optimization feedback
 
 Reports are saved in local history and can be exported as **PDF** or **Markdown**.
 
@@ -39,35 +45,35 @@ Reports are saved in local history and can be exported as **PDF** or **Markdown*
 
 ## Features
 
-* **AI-powered SEO analysis**
+- **AI-powered SEO analysis**
   Integrates AI feedback for detailed website recommendations.
 
-* **Real-time analysis modal**
+- **Real-time analysis modal**
   Displays a loading modal during report generation using Radix UI Dialog.
 
-* **Responsive and themed layout**
+- **Responsive and themed layout**
   Uses fluid Tailwind spacing and color variables for adaptive design.
 
-* **Persistent report history**
+- **Persistent report history**
   Stores reports with searchable filters and tag-based categorization.
 
-* **PDF and Markdown export**
+- **PDF and Markdown export**
   Exports the full report view using `html2canvas` and `jsPDF`, or plain Markdown.
 
-* **Dark mode support**
+- **Dark mode support**
   Fully theme-aware with color variables defined in `globals.css`.
 
 ---
 
 ## Tech Stack
 
-* **Framework:** Next.js 14 (App Router)
-* **Language:** TypeScript
-* **Styling:** Tailwind CSS 3, Fluid Tailwind
-* **State Management:** Recoil
-* **UI Components:** Radix UI, Lucide Icons
-* **PDF/Markdown Export:** jsPDF, html2canvas
-* **AI Integration:** OpenAI API (via backend `/api/analyze` route)
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS 3, Fluid Tailwind
+- **State Management:** Recoil
+- **UI Components:** Radix UI, Lucide Icons
+- **PDF/Markdown Export:** jsPDF, html2canvas
+- **AI Integration:** OpenAI API (via backend `/api/analyze` route)
 
 ---
 
@@ -126,7 +132,7 @@ src/
 
 ## Development
 
- the project locally:
+the project locally:
 
 ```bash
 yarn dev
@@ -151,13 +157,13 @@ Adjust as needed for your environment.
 
 ## Scripts
 
-| Command         | Description                 |
-| --------------- | --------------------------- |
-| `yarn dev`   | Start development server    |
-| `yarn  build` | Build the production bundle |
-| `yarn  start` | Serve the production build  |
+| Command       | Description                   |
+| ------------- | ----------------------------- |
+| `yarn dev`    | Start development server      |
+| `yarn  build` | Build the production bundle   |
+| `yarn  start` | Serve the production build    |
 | `yarn  clean` | Format all code with Prettier |
-| `yarn  lint`  |  ESLint checks           |
+| `yarn  lint`  | ESLint checks                 |
 
 ---
 
@@ -167,9 +173,9 @@ Global theming is handled in `globals.css` using Tailwind’s `@layer` directive
 
 ### Highlights
 
-* All base colors are defined using CSS variables (`--primary`, `--foreground`, etc.).
-* The `.card`, `.btn`, `.btn-icon`, `.tooltip`, and `.filter-dot-*` utilities ensure consistent UI elements.
-* Dark mode is activated with the `.dark` class and is automatically color-aware.
+- All base colors are defined using CSS variables (`--primary`, `--foreground`, etc.).
+- The `.card`, `.btn`, `.btn-icon`, `.tooltip`, and `.filter-dot-*` utilities ensure consistent UI elements.
+- Dark mode is activated with the `.dark` class and is automatically color-aware.
 
 ---
 
@@ -177,25 +183,25 @@ Global theming is handled in `globals.css` using Tailwind’s `@layer` directive
 
 ### UrlInputForm
 
-* The entry point for analysis.
-* Styled using `.card` and `.btn-primary`.
-* Automatically prepends `https://` to incomplete URLs.
+- The entry point for analysis.
+- Styled using `.card` and `.btn-primary`.
+- Automatically prepends `https://` to incomplete URLs.
 
 ### ReportHistory
 
-* Displays saved reports with tag filters, search, and sorting.
-* Integrated tooltips for all action buttons.
-* Exports reports via PDF or Markdown.
+- Displays saved reports with tag filters, search, and sorting.
+- Integrated tooltips for all action buttons.
+- Exports reports via PDF or Markdown.
 
 ### AnalyzeLoadingModal
 
-* A Radix UI Dialog that stays open while the analysis runs.
-* Uses the `Loader2` spinner and theme colors.
+- A Radix UI Dialog that stays open while the analysis runs.
+- Uses the `Loader2` spinner and theme colors.
 
 ### SeoReport
 
-* Renders the detailed AI-generated report.
-* Export actions connect directly to `export.ts`.
+- Renders the detailed AI-generated report.
+- Export actions connect directly to `export.ts`.
 
 ---
 
@@ -203,24 +209,54 @@ Global theming is handled in `globals.css` using Tailwind’s `@layer` directive
 
 The `export.ts` module handles:
 
-* **PDF Export:** Converts the current `#seo-report-content` DOM element to a PDF using `html2canvas` and `jsPDF`.
+- **PDF Export:** Converts the current `#seo-report-content` DOM element to a PDF using `html2canvas` and `jsPDF`.
 
-* **Markdown Export:** Generates a clean Markdown document from the report’s structured data.
+- **Markdown Export:** Generates a clean Markdown document from the report’s structured data.
 
 All exports are named dynamically using the target site’s domain and a UTC timestamp.
+
+#### File Name Pattern
+
+```bas
+your-name-2025-10-30_18-22-54_Z.pdf
+```
+
+**What it means:**
+
+- `your-name` → What the file is about (like a website or project)
+- `2025-10-30` → The **date** (year-month-day)
+- `_18-22-54` → The **time** (hour-minute-second, 24-hour clock)
+- `_Z` → Made in **UTC time** (like "world time" — no confusion with time zones)
+- `.pdf` → The file type
+
+**Why it’s good:**
+
+- Easy to **read** like a calendar entry
+- Files **sort correctly** in any folder (newest on bottom)
+- Works on **Windows, Mac, and Linux**
+- No weird symbols that break things
+
+**Example:**  
+`seo-report-google.com-2025-10-30_18-22-54_Z.pdf`  
+→ "SEO report for google.com, saved on Oct 30, 2025 at 6:22 PM UTC"
+
+---
+
+**Just remember:**  
+**Name + Date + Time + Z + .filetype**  
+→ Clean, clear, and always in order!
 
 ---
 
 ## Future Improvements
 
-* Add progress phases inside the Analyze modal (data fetch, AI analysis, render).
-* Integrate OpenAI function calling for structured analysis.
-* Enable drag-and-drop file uploads for batch SEO checks.
-* Add user authentication and persistent cloud storage for reports.
+- Add progress phases inside the Analyze modal (data fetch, AI analysis, render).
+- Integrate OpenAI function calling for structured analysis.
+- Enable drag-and-drop file uploads for batch SEO checks.
+- Add user authentication and persistent cloud storage for reports.
 
 ---
 
 ## License
 
 This project is open-source and available under the [MIT License](LICENSE).
- 
