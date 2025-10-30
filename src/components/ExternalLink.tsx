@@ -8,14 +8,14 @@ interface ExternalLinkProps {
 	rel?: string
 }
 
-export default function ExternalLink({ href, children, className = '', ...rest }: ExternalLinkProps) {
+export default function ExternalLink({
+	href,
+	children,
+	className = '',
+	...rest
+}: ExternalLinkProps) {
 	return (
-		<a
-			href={href}
-			target={rest.target}
-			rel="noopener noreferrer"
-			className={className}
-		>
+		<a href={href} target={rest.target} rel="noopener noreferrer" className={className}>
 			{children}
 		</a>
 	)

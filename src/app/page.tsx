@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useSetRecoilState } from 'recoil'
-import { reportHistoryState, reportTagsState } from '@/state/atoms'
 import ErrorAlert from '@/components/ErrorAlert'
 import ReportHistory from '@/components/ReportHistory'
 import SeoReport from '@/components/SeoReport'
 import UrlInputForm, { UrlInputFormRef } from '@/components/UrlInputForm'
 import { exportToPDF, generateMarkdown } from '@/lib/export'
+import { reportHistoryState, reportTagsState } from '@/state/atoms'
 import type { Report, ReportSummary } from '@/types/report'
+import { useSetRecoilState } from 'recoil'
 
 export default function Home() {
 	const [loading, setLoading] = useState(false)
@@ -44,11 +44,10 @@ export default function Home() {
 		}
 	}
 
-	// Utility: collect tags from MongoDB reports
 	const extractTags = (reports: ReportSummary[]): string[] => {
 		const tags = new Set<string>()
-		reports.forEach(r => {
-			r.tags?.forEach(t => tags.add(t))
+		reports.forEach((r) => {
+			r.tags?.forEach((t) => tags.add(t))
 			if (r.businessCategory) tags.add(r.businessCategory)
 		})
 		return Array.from(tags)
@@ -65,7 +64,6 @@ export default function Home() {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ url })
 			})
-
 			const data = await response.json()
 			if (!response.ok) throw new Error(data.error || 'Failed to analyze website')
 
@@ -100,7 +98,7 @@ export default function Home() {
 
 			if (data.success) {
 				await loadReports()
-				if (currentReport && (currentReport._id === id || currentReport.id?.toString() === id)) {
+				if (currentReport && currentReport._id === id) {
 					setCurrentReport(null)
 				}
 			} else setError(data.error || 'Failed to delete report')
@@ -117,7 +115,9 @@ export default function Home() {
 				const data = await response.json()
 				if (data.success && data.report) reportToExport = data.report
 			}
-			if (reportToExport) await exportToPDF('seo-report-content', reportToExport.url)
+			if (reportToExport) {
+				await exportToPDF('seo-report-content', reportToExport.url)
+			}
 		} catch {
 			setError('Failed to export PDF')
 		}
@@ -134,12 +134,26 @@ export default function Home() {
 			if (reportToExport) {
 				const markdown = generateMarkdown({
 					url: reportToExport.url,
-					metadata: reportToExport.metadata,
-					aiFeedback: reportToExport.aiFeedback,
-					createdAt: typeof reportToExport.createdAt === 'string'
-						? reportToExport.createdAt
-						: reportToExport.createdAt?.toISOString()
+					metadata: {
+						pageTitle: reportToExport.metadata.pageTitle ?? null,
+						metaDescription: reportToExport.metadata.metaDescription ?? null,
+						metaKeywords: reportToExport.metadata.metaKeywords
+							? reportToExport.metadata.metaKeywords.join(', ')
+							: null,
+						h1Tags: reportToExport.metadata.h1Tags ?? [],
+						imageCount: reportToExport.metadata.imageCount ?? 0,
+						hasFavicon: reportToExport.metadata.hasFavicon ?? false
+					},
+					aiFeedback:
+						typeof reportToExport.aiFeedback === 'string'
+							? reportToExport.aiFeedback
+							: JSON.stringify(reportToExport.aiFeedback, null, 2),
+					createdAt:
+						typeof reportToExport.createdAt === 'string'
+							? reportToExport.createdAt
+							: reportToExport.createdAt?.toISOString()
 				})
+
 				const blob = new Blob([markdown], { type: 'text/markdown' })
 				const url = URL.createObjectURL(blob)
 				const a = document.createElement('a')
@@ -163,31 +177,31 @@ export default function Home() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-100">
-			<header className="text-center py-8 md:py-12 bg-gray-100">
-				<h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">
+		<div className="bg-gray-100 flex min-h-screen flex-col">
+			<header className="bg-gray-100 py-8 text-center md:py-12">
+				<h1 className="mb-3 text-3xl font-bold md:mb-4 md:text-4xl lg:text-5xl">
 					SEO Report Generator
 				</h1>
-				<p className="text-base md:text-lg text-gray-700">
+				<p className="text-gray-700 text-base md:text-lg">
 					AI-powered website analysis to improve your search engine optimization
 				</p>
 			</header>
 
-			<div className="container mx-auto px-4 pb-8 md:pb-12 max-w-[1400px]">
-				<div className="mb-8">
+			<main className="mx-auto w-full max-w-[1400px] flex-1 space-y-8 px-4 pb-12 sm:px-6 lg:px-8">
+				<div className="mt-4">
 					<UrlInputForm ref={urlInputRef} onAnalyze={handleAnalyze} loading={loading} />
 				</div>
 
 				{error && (
-					<div className="mb-6">
+					<div>
 						<ErrorAlert message={error} onDismiss={() => setError(null)} />
 					</div>
 				)}
 
 				<div className="space-y-8">
 					{currentReport ? (
-						<div className="flex flex-col lg:flex-row gap-6">
-							<aside className="w-full lg:w-80 flex-shrink-0">
+						<div className="flex flex-col gap-6 lg:flex-row">
+							<aside className="w-full flex-shrink-0 lg:w-80">
 								<ReportHistory
 									onViewReport={handleViewReport}
 									onDeleteReport={handleDeleteReport}
@@ -198,7 +212,7 @@ export default function Home() {
 									currentReportId={currentReport._id}
 								/>
 							</aside>
-							<div className="flex-1 min-w-0">
+							<div className="min-w-0 flex-1">
 								<SeoReport
 									report={currentReport}
 									onExportPDF={() => handleExportPDF()}
@@ -218,11 +232,11 @@ export default function Home() {
 						/>
 					)}
 				</div>
+			</main>
 
-				<footer className="text-center mt-12 md:mt-16 text-sm text-gray-600">
-					Built with Next.js, TypeScript, and OpenAI
-				</footer>
-			</div>
+			<footer className="text-gray-600 border-gray-200 mt-auto border-t py-10 text-center text-sm">
+				Built with Next.js, TypeScript, and OpenAI
+			</footer>
 		</div>
 	)
 }

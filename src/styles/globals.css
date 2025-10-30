@@ -3,29 +3,29 @@
 @tailwind utilities;
 
 :root {
-  /* Primary Accent Color - for interactive elements, primary buttons, key highlights */
-  --color-accent-primary: #4c8bab;
+	/* Primary Accent Color - for interactive elements, primary buttons, key highlights */
+	--color-accent-primary: #4c8bab;
 
-  /* Secondary Muted Color - for subtle backgrounds, secondary elements, borders */
-  --color-muted-secondary: #636e5b;
+	/* Secondary Muted Color - for subtle backgrounds, secondary elements, borders */
+	--color-muted-secondary: #636e5b;
 
-  /* Tertiary Accent Color - for critical tags, error states, warnings */
-  --color-accent-tertiary: #fe3557;
+	/* Tertiary Accent Color - for critical tags, error states, warnings */
+	--color-accent-tertiary: #fe3557;
 
-  /* Base Backgrounds */
-  --color-background-light: #ffffff; /* Typically for main content areas */
-  --color-background-light-alt: #f8f8f8; /* For sidebars, card backgrounds, or subtle differentiation */
+	/* Base Backgrounds */
+	--color-background-light: #ffffff; /* Typically for main content areas */
+	--color-background-light-alt: #f8f8f8; /* For sidebars, card backgrounds, or subtle differentiation */
 
-  /* Text Colors (assuming a light background for readability) */
-  --color-text-dark: #333333; /* Main headings, body text */
-  --color-text-medium: #666666; /* Secondary text, labels */
-  --color-text-light: #999999; /* Helper text, disabled states */
+	/* Text Colors (assuming a light background for readability) */
+	--color-text-dark: #333333; /* Main headings, body text */
+	--color-text-medium: #666666; /* Secondary text, labels */
+	--color-text-light: #999999; /* Helper text, disabled states */
 
-  /* Example Tag Colors (adjust as needed for specific categories) */
-  --color-tag-optimized: #4CAF50; /* A green for 'Optimized' */
-  --color-tag-technical: #FF9800; /* An orange for 'Technical' */
-  --color-tag-content: #9C27B0; /* A purple for 'Content' */
-  --color-tag-meta: #2196F3; /* A blue for 'Meta' */
+	/* Example Tag Colors (adjust as needed for specific categories) */
+	--color-tag-optimized: #4caf50; /* A green for 'Optimized' */
+	--color-tag-technical: #ff9800; /* An orange for 'Technical' */
+	--color-tag-content: #9c27b0; /* A purple for 'Content' */
+	--color-tag-meta: #2196f3; /* A blue for 'Meta' */
 }
 
 body {
@@ -50,4 +50,3 @@ body {
 	display: block !important;
 	margin-bottom: 20px !important;
 }
-

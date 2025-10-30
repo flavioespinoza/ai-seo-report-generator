@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/lib/db'
+import { detectBusinessCategory, generateTagsFromMetadata } from '@/lib/generateTags'
 import { generateSeoFeedback } from '@/lib/openai'
 import { ScraperError, scrapeMetadata } from '@/lib/scraper'
-import { generateTagsFromMetadata, detectBusinessCategory } from '@/lib/generateTags'
 import type { Report } from '@/types/report'
 import { z } from 'zod'
 
@@ -16,10 +16,7 @@ export async function POST(request: NextRequest) {
 		const validation = analyzeSchema.safeParse(body)
 
 		if (!validation.success) {
-			return NextResponse.json(
-				{ error: validation.error.errors[0].message },
-				{ status: 400 }
-			)
+			return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 })
 		}
 
 		const { url } = validation.data
@@ -30,10 +27,7 @@ export async function POST(request: NextRequest) {
 			metadata = await scrapeMetadata(url)
 		} catch (error) {
 			if (error instanceof ScraperError) {
-				return NextResponse.json(
-					{ error: error.message },
-					{ status: error.statusCode || 400 }
-				)
+				return NextResponse.json({ error: error.message }, { status: error.statusCode || 400 })
 			}
 			throw error
 		}
@@ -52,8 +46,8 @@ export async function POST(request: NextRequest) {
 			metaKeywords: Array.isArray(metadata.metaKeywords)
 				? metadata.metaKeywords
 				: metadata.metaKeywords
-				? [metadata.metaKeywords]
-				: undefined,
+					? [metadata.metaKeywords]
+					: undefined,
 			h1Tags: metadata.h1Tags ?? undefined,
 			imageCount: metadata.imageCount ?? undefined,
 			hasFavicon: metadata.hasFavicon ?? undefined,
@@ -101,9 +95,7 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json(
 			{
 				error:
-					error instanceof Error
-						? error.message
-						: 'Failed to analyze website. Please try again.'
+					error instanceof Error ? error.message : 'Failed to analyze website. Please try again.'
 			},
 			{ status: 500 }
 		)

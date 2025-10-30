@@ -12,7 +12,7 @@ export interface Metadata {
 export interface Report {
 	_id?: string
 	url: string
-	pageTitle?: string 
+	pageTitle?: string
 	metadata: {
 		pageTitle?: string
 		metaDescription?: string
@@ -42,6 +42,16 @@ export interface ReportSummary {
 	hasIssues: boolean
 	tags?: string[]
 	businessCategory?: string
+}
+
+interface ReportHistoryProps {
+	onViewReport: (id: string) => void
+	onDeleteReport: (id: string) => void
+	onExportPDF: (id: string) => void
+	onExportMarkdown: (id: string) => void
+	loading?: boolean
+	isReportView?: boolean
+	currentReportId?: string // ✅ add this
 }
 
 // Tag categories for filtering
@@ -83,9 +93,9 @@ export const BUSINESS_CATEGORY_TAGS = [
 	'Other'
 ] as const
 
-export type SeoStatusTag = typeof SEO_STATUS_TAGS[number]
-export type TechnicalSeoTag = typeof TECHNICAL_SEO_TAGS[number]
-export type BusinessCategoryTag = typeof BUSINESS_CATEGORY_TAGS[number]
+export type SeoStatusTag = (typeof SEO_STATUS_TAGS)[number]
+export type TechnicalSeoTag = (typeof TECHNICAL_SEO_TAGS)[number]
+export type BusinessCategoryTag = (typeof BUSINESS_CATEGORY_TAGS)[number]
 export type ReportTag = SeoStatusTag | TechnicalSeoTag | BusinessCategoryTag
 
 export const ALL_TAGS = [
