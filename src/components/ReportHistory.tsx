@@ -135,7 +135,7 @@ export default function ReportHistory({
 															type="checkbox"
 															checked={isSelected}
 															onChange={() => toggleTag(tag)}
-															className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+															className="rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
 														/>
 														<span className="text-gray-700 dark:text-gray-300">{tag}</span>
 													</div>
@@ -165,7 +165,7 @@ export default function ReportHistory({
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder="Search reports..."
-							className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+							className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-[var(--primary)]"
 						/>
 					</div>
 				</div>
@@ -183,7 +183,7 @@ export default function ReportHistory({
 											className="w-[60%] cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700"
 											onClick={() => setSortField('url')}
 										>
-											<div className="flex items-center gap-1 hover:text-blue-600">
+											<div className="flex items-center gap-1 hover:text-[var(--primary)]">
 												Report
 												{sortField === 'url' && <SortIcon size={14} />}
 											</div>
@@ -192,7 +192,7 @@ export default function ReportHistory({
 											className="w-[20%] cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700"
 											onClick={() => setSortField('createdAt')}
 										>
-											<div className="flex items-center gap-1 hover:text-blue-600">
+											<div className="flex items-center gap-1 hover:text-[var(--primary)]">
 												Created
 												{sortField === 'createdAt' && <SortIcon size={14} />}
 											</div>
@@ -221,7 +221,7 @@ export default function ReportHistory({
 														<ExternalLink
 															href={r.url}
 															target="_blank"
-															className="truncate text-sm font-medium text-blue-600 hover:text-blue-800"
+															className="truncate text-sm font-medium text-[var(--primary)] hover:underline"
 														>
 															{r.url}
 														</ExternalLink>
@@ -261,13 +261,18 @@ export default function ReportHistory({
 												<td className="px-4 py-3 text-right">
 													<div className="mt-6 flex flex-wrap justify-end gap-2">
 														<div className="tooltip">
-															<button
-																type="button"
-																className="btn-icon text-red-600"
-																onClick={() => onDeleteReport(id)}
-															>
-																<Trash2 size={18} />
-															</button>
+															<DeleteConfirmDialog
+																onConfirm={() => onDeleteReport(id)}
+																trigger={
+																	<button
+																		type="button"
+																		className="btn-icon text-red-600"
+																		title="Delete Report"
+																	>
+																		<Trash2 size={18} />
+																	</button>
+																}
+															/>
 															<span className="tooltip-text">Delete Report</span>
 														</div>
 

@@ -220,7 +220,6 @@ All exports are named dynamically using the target site’s domain and a UTC tim
 ```bas
 your-name-2025-10-30_18-22-54_Z.pdf
 ```
-
 **What it means:**
 
 - `your-name` → What the file is about (like a website or project)
@@ -248,12 +247,55 @@ your-name-2025-10-30_18-22-54_Z.pdf
 
 ---
 
-## Future Improvements
+## Suggested Improvements for AI SEO Report Generator
 
-- Add progress phases inside the Analyze modal (data fetch, AI analysis, render).
-- Integrate OpenAI function calling for structured analysis.
-- Enable drag-and-drop file uploads for batch SEO checks.
-- Add user authentication and persistent cloud storage for reports.
+### 1. Testing and Stability
+- **Migrate tests to Jest with `ts-jest`** for consistent TypeScript handling.
+- **Add integration tests** for API routes (`/api/reports` and `/api/analyze`).
+- **Mock external dependencies** such as `fetch` and OpenAI API to improve test reliability.
+- **Include error handling tests** for network timeouts and invalid responses.
+
+### 2. Code Quality and Architecture
+- **Refactor API route logic** into reusable functions within `lib/` for better separation of concerns.
+- **Add input validation schemas** (Zod) for `/api/analyze` and `/api/reports` endpoints.
+- **Implement centralized error handler** to return structured error responses.
+- **Improve type safety** by extending shared TypeScript interfaces across components and API responses.
+
+### 3. Frontend UX Enhancements
+- **Add progress indicators** inside the Analyze modal (e.g., "Fetching HTML", "Analyzing Metadata", "Generating AI Feedback").
+- **Enable cancel button** during SEO analysis to abort requests.
+- **Add skeleton loaders** for report cards and history table.
+- **Persist filter state** (tags, search query) between sessions using `localStorage`.
+
+### 4. Export and Data Management
+- **Support batch export** of multiple reports (PDF and Markdown).
+- **Add CSV export** for SEO report summaries.
+- **Improve file naming** consistency and allow custom export filenames.
+- **Embed report metadata** (date, domain, version) in exported Markdown and PDF files.
+
+### 5. Performance and Scalability
+- **Add caching** for repeated URL analyses.
+- **Introduce incremental static regeneration (ISR)** for faster server responses.
+- **Optimize `html2canvas` rendering** by excluding unnecessary elements (buttons, tooltips).
+- **Implement pagination or virtualized lists** for large report histories.
+
+### 6. UI and Theming
+- **Add color system presets** (e.g., blue, green, amber themes).
+- **Improve dark mode contrast** in cards, tooltips, and table headers.
+- **Add motion preferences** to respect user’s reduced motion settings.
+- **Introduce consistent spacing system** across cards, buttons, and modals.
+
+### 7. Developer Experience
+- **Add ESLint and Prettier configs** aligned with Next.js defaults.
+- **Add commit hooks with Husky** to enforce linting before commits.
+- **Include a sample `.env.local.example`** for new contributors.
+- **Improve README** with environment setup, test coverage, and deployment instructions.
+
+### 8. Deployment and Monitoring
+- **Enable Vercel analytics** for performance insights.
+- **Add logging middleware** for API routes to monitor failures.
+- **Integrate Sentry or Logtail** for error tracking in production.
+- **Use environment-specific configuration** to separate dev, staging, and prod builds.
 
 ---
 
