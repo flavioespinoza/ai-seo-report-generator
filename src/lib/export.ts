@@ -4,6 +4,7 @@ import jsPDF from 'jspdf'
 
 /**
  * Generate a markdown version of the SEO report
+ * Handles both string and object aiFeedback values safely.
  */
 export function generateMarkdown(report: {
 	url: string
@@ -15,10 +16,28 @@ export function generateMarkdown(report: {
 		imageCount: number
 		hasFavicon: boolean
 	}
-	aiFeedback: string
+	aiFeedback?: string | object | undefined
 	createdAt?: string
 }): string {
 	const { metadata, aiFeedback, url, createdAt } = report
+
+	// Convert AI feedback to a clean string
+	const formattedFeedback =
+		typeof aiFeedback === 'string'
+			? aiFeedback
+			: aiFeedback
+				? JSON.stringify(aiFeedback, null, 2)
+				: 'No AI feedback available.'
+
+	// Ensure metadata safety
+	const safeMeta = {
+		pageTitle: metadata.pageTitle ?? 'Missing',
+		metaDescription: metadata.metaDescription ?? 'Missing',
+		metaKeywords: metadata.metaKeywords ?? 'Not specified',
+		h1Tags: metadata.h1Tags ?? [],
+		imageCount: metadata.imageCount ?? 0,
+		hasFavicon: metadata.hasFavicon ?? false
+	}
 
 	return `# SEO Report for ${url}
 
@@ -28,19 +47,19 @@ export function generateMarkdown(report: {
 
 ## 🏷 Page Metadata
 
-- **Title:** ${metadata.pageTitle || 'Missing'}
-- **Description:** ${metadata.metaDescription || 'Missing'}
-- **Keywords:** ${metadata.metaKeywords || 'Not specified'}
-- **Images:** ${metadata.imageCount}
-- **Favicon:** ${metadata.hasFavicon ? 'Present' : 'Missing'}
+- **Title:** ${safeMeta.pageTitle}
+- **Description:** ${safeMeta.metaDescription}
+- **Keywords:** ${safeMeta.metaKeywords}
+- **Images:** ${safeMeta.imageCount}
+- **Favicon:** ${safeMeta.hasFavicon ? 'Present' : 'Missing'}
 - **H1 Tags:**  
-${metadata.h1Tags.length > 0 ? metadata.h1Tags.map((tag) => `  - ${tag}`).join('\n') : '  - None'}
+${safeMeta.h1Tags.length > 0 ? safeMeta.h1Tags.map((tag) => `  - ${tag}`).join('\n') : '  - None'}
 
 ---
 
 ## 🤖 AI-Powered SEO Analysis
 
-${aiFeedback}
+${formattedFeedback}
 `
 }
 

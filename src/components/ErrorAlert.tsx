@@ -41,7 +41,7 @@ export default function ErrorAlert({ message, onDismiss }: ErrorAlertProps) {
 
 						<div className="mt-6 flex justify-end">
 							<Dialog.Close asChild>
-								<Button variant="default" className="bg-red-600">
+								<Button variant="default" className="btn-danger">
 									Close
 								</Button>
 							</Dialog.Close>

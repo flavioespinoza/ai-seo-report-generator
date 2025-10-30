@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+		<title>AI SEO Report Generator</title>
+		<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+			rel="stylesheet"
+		/>
+		<script>
+			tailwind.config = {
+				darkMode: 'class',
+				theme: {
+					extend: {
+						colors: {
+							primary: '#4c8bab',
+							'primary-dark': '#636e5b',
+							critical: '#fe3557',
+							'background-light': '#F8FAFC', // Slate-50
+							'background-dark': '#0F172A' // Slate-900
+						},
+						fontFamily: {
+							display: ['Inter', 'sans-serif']
+						},
+						borderRadius: {
+							DEFAULT: '0.5rem' // 8px
+						}
+					}
+				}
+			}
+		</script>
+		<style>
+			.material-symbols-outlined {
+				font-variation-settings:
+					'FILL' 0,
+					'wght' 400,
+					'GRAD' 0,
+					'opsz' 24;
+			}
+		</style>
+		<style>
+			body {
+				min-height: max(884px, 100dvh);
+			}
+		</style>
+		<style>
+			body {
+				min-height: max(884px, 100dvh);
+			}
+		</style>
+	</head>
+	<body
+		class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200 antialiased"
+	>
+		<div class="container mx-auto px-4 py-8 sm:px-6 md:py-16 lg:px-8">
+			<header class="mb-10 text-center">
+				<h1 class="text-gray-900 text-4xl font-bold dark:text-white md:text-5xl">
+					SEO Report Generator
+				</h1>
+				<p class="text-gray-600 dark:text-gray-400 mt-3 text-lg">
+					AI-powered website analysis to improve your search engine optimization
+				</p>
+			</header>
+			<main>
+				<div class="dark:bg-slate-800 mb-10 rounded-lg bg-white p-6 shadow-md sm:p-8">
+					<label
+						class="text-gray-700 dark:text-gray-300 mb-2 block text-sm font-medium"
+						for="website-url"
+						>Website URL</label
+					>
+					<div class="flex flex-col gap-4 sm:flex-row">
+						<input
+							class="bg-slate-100 dark:bg-slate-700 border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 w-full flex-grow rounded-md focus:border-primary focus:ring-primary"
+							id="website-url"
+							name="website-url"
+							placeholder="https://example.com or example.com"
+							type="url"
+						/>
+						<button
+							class="whitespace-nowrap rounded-md bg-primary px-6 py-2.5 font-semibold text-white transition-opacity hover:opacity-90"
+						>
+							Analyze SEO
+						</button>
+					</div>
+					<p class="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+						Enter any website URL to receive a comprehensive SEO analysis powered by AI
+					</p>
+				</div>
+				<div class="flex flex-col gap-8 lg:flex-row">
+					<aside class="lg:w-1/4 xl:w-1/5">
+						<div class="dark:bg-slate-800 rounded-lg bg-white p-6 shadow-md">
+							<h2 class="text-gray-900 mb-4 text-lg font-semibold dark:text-white">Filters</h2>
+							<div>
+								<div class="flex cursor-pointer items-center justify-between">
+									<h3 class="text-gray-700 dark:text-gray-300 font-medium">Tags</h3>
+									<span class="material-symbols-outlined text-gray-500 dark:text-gray-400"
+										>expand_less</span
+									>
+								</div>
+								<div class="mt-4 space-y-3">
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-optimized"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-optimized"
+											>Optimized</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-improvement"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-improvement"
+											>Needs Improvement</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 text-critical focus:ring-critical bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded"
+											id="tag-critical"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-critical"
+											>Critical Issues</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-newly"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-newly"
+											>Newly Analyzed</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-meta"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-meta"
+											>Missing Meta Description</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-title"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-title"
+											>Missing Title Tag</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											checked=""
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-h1"
+											type="checkbox"
+										/>
+										<label class="text-gray-600 dark:text-gray-400 ml-2 block text-sm" for="tag-h1"
+											>No H1 Tag</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-multi-h1"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-multi-h1"
+											>Multiple H1 Tags</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-favicon"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-favicon"
+											>No Favicon</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-images"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-images"
+											>No Images</label
+										>
+									</div>
+									<div class="flex items-center">
+										<input
+											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											id="tag-title-short"
+											type="checkbox"
+										/>
+										<label
+											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											for="tag-title-short"
+											>Title Too Short</label
+										>
+									</div>
+								</div>
+							</div>
+						</div>
+					</aside>
+					<section class="lg:w-3/4 xl:w-4/5">
+						<div class="relative mb-4">
+							<span
+								class="material-symbols-outlined text-gray-400 dark:text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"
+								>search</span
+							>
+							<input
+								class="dark:bg-slate-800 border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 w-full rounded-md border bg-white py-2 pl-10 pr-4 focus:border-primary focus:ring-primary"
+								placeholder="Search reports..."
+								type="search"
+							/>
+						</div>
+						<div class="dark:bg-slate-800 overflow-hidden rounded-lg bg-white shadow-md">
+							<div class="overflow-x-auto">
+								<table class="w-full text-left text-sm">
+									<thead
+										class="bg-slate-50 dark:bg-slate-700/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider"
+									>
+										<tr>
+											<th class="px-6 py-3" scope="col">Report</th>
+											<th class="whitespace-nowrap px-6 py-3" scope="col">
+												<div class="flex items-center">
+													Created
+													<span class="material-symbols-outlined ml-1 text-base"
+														>arrow_downward</span
+													>
+												</div>
+											</th>
+											<th class="px-6 py-3 text-right" scope="col">Actions</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr
+											class="border-gray-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/30 border-b transition-colors"
+										>
+											<td class="px-6 py-4">
+												<div class="font-medium text-primary hover:underline">
+													https://uizard.io
+												</div>
+												<div class="text-gray-500 dark:text-gray-400">
+													UI Design Made Easy, Powered By AI | Uizard
+												</div>
+											</td>
+											<td class="text-gray-600 dark:text-gray-300 whitespace-nowrap px-6 py-4">
+												10/30/2025
+											</td>
+											<td class="px-6 py-4">
+												<div
+													class="text-gray-500 dark:text-gray-400 flex items-center justify-end gap-3"
+												>
+													<button class="hover:text-critical">
+														<span class="material-symbols-outlined text-critical text-xl"
+															>delete</span
+														>
+													</button>
+													<button class="hover:text-primary">
+														<span
+															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															>download</span
+														>
+													</button>
+													<button class="hover:text-primary">
+														<span
+															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															>content_copy</span
+														>
+													</button>
+													<button class="hover:text-primary">
+														<span class="material-symbols-outlined text-xl text-primary"
+															>visibility</span
+														>
+													</button>
+												</div>
+											</td>
+										</tr>
+										<tr
+											class="border-gray-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/30 border-b transition-colors"
+										>
+											<td class="px-6 py-4">
+												<div class="font-medium text-primary hover:underline">
+													https://flavioespinoza.com
+												</div>
+												<div class="text-gray-500 dark:text-gray-400">
+													Flavio Espinoza | Portfolio
+												</div>
+											</td>
+											<td class="text-gray-600 dark:text-gray-300 whitespace-nowrap px-6 py-4">
+												10/30/2025
+											</td>
+											<td class="px-6 py-4">
+												<div
+													class="text-gray-500 dark:text-gray-400 flex items-center justify-end gap-3"
+												>
+													<button class="hover:text-critical">
+														<span class="material-symbols-outlined text-critical text-xl"
+															>delete</span
+														>
+													</button>
+													<button class="hover:text-primary">
+														<span
+															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															>download</span
+														>
+													</button>
+													<button class="hover:text-primary">
+														<span
+															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															>content_copy</span
+														>
+													</button>
+													<button class="hover:text-primary">
+														<span class="material-symbols-outlined text-xl text-primary"
+															>visibility</span
+														>
+													</button>
+												</div>
+											</td>
+										</tr>
+										<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+											<td class="px-6 py-4">
+												<div class="font-medium text-primary hover:underline">
+													https://amazon.com
+												</div>
+												<div class="text-gray-500 dark:text-gray-400">
+													Amazon.com. Spend less. Smile more.
+												</div>
+											</td>
+											<td class="text-gray-600 dark:text-gray-300 whitespace-nowrap px-6 py-4">
+												10/30/2025
+											</td>
+											<td class="px-6 py-4">
+												<div
+													class="text-gray-500 dark:text-gray-400 flex items-center justify-end gap-3"
+												>
+													<button class="hover:text-critical">
+														<span class="material-symbols-outlined text-critical text-xl"
+															>delete</span
+														>
+													</button>
+													<button class="hover:text-primary">
+														<span
+															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															>download</span
+														>
+													</button>
+													<button class="hover:text-primary">
+														<span
+															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															>content_copy</span
+														>
+													</button>
+													<button class="hover:text-primary">
+														<span class="material-symbols-outlined text-xl text-primary"
+															>visibility</span
+														>
+													</button>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</section>
+				</div>
+			</main>
+			<footer class="mt-16 text-center">
+				<p class="text-gray-500 dark:text-gray-400 text-sm">
+					Built with Next.js, TypeScript, and OpenAI
+				</p>
+			</footer>
+		</div>
+	</body>
+</html>

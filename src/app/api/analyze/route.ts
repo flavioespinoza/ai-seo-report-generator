@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/lib/db'
+import { detectBusinessCategory, generateTagsFromMetadata } from '@/lib/generateTags'
 import { generateSeoFeedback } from '@/lib/openai'
 import { ScraperError, scrapeMetadata } from '@/lib/scraper'
 import type { Report } from '@/types/report'
@@ -12,15 +13,15 @@ const analyzeSchema = z.object({
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json()
-
 		const validation = analyzeSchema.safeParse(body)
+
 		if (!validation.success) {
 			return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 })
 		}
 
 		const { url } = validation.data
 
-		// Scrape metadata
+		// 🕷️ Scrape metadata from the target URL
 		let metadata
 		try {
 			metadata = await scrapeMetadata(url)
@@ -31,35 +32,57 @@ export async function POST(request: NextRequest) {
 			throw error
 		}
 
-		// Generate AI feedback
+		// 🧠 Generate AI-based SEO feedback
 		const aiFeedback = await generateSeoFeedback(metadata)
 
-		// Save report to MongoDB
+		// 🏷️ Derive tags & business category
+		const tags = generateTagsFromMetadata(metadata, aiFeedback)
+		const businessCategory = detectBusinessCategory(metadata, aiFeedback, url)
+
+		// ✅ Normalize nulls → undefined (TypeScript-safe)
+		const safeMeta = {
+			pageTitle: metadata.pageTitle ?? undefined,
+			metaDescription: metadata.metaDescription ?? undefined,
+			metaKeywords: Array.isArray(metadata.metaKeywords)
+				? metadata.metaKeywords
+				: metadata.metaKeywords
+					? [metadata.metaKeywords]
+					: undefined,
+			h1Tags: metadata.h1Tags ?? undefined,
+			imageCount: metadata.imageCount ?? undefined,
+			hasFavicon: metadata.hasFavicon ?? undefined,
+			titleLength: metadata.titleLength ?? undefined,
+			descriptionLength: metadata.descriptionLength ?? undefined
+		}
+
+		// ✅ Always store a top-level pageTitle with a fallback
+		const pageTitle = safeMeta.pageTitle?.trim() || '(No title)'
+
+		// 💾 Save report to MongoDB
 		const client = await clientPromise
 		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
 		const collection = db.collection<Report>('reports')
 
 		const newReport: Report = {
 			url: metadata.url,
-			metadata: {
-				pageTitle: metadata.pageTitle,
-				metaDescription: metadata.metaDescription,
-				metaKeywords: metadata.metaKeywords,
-				h1Tags: metadata.h1Tags,
-				imageCount: metadata.imageCount,
-				hasFavicon: metadata.hasFavicon,
-				titleLength: metadata.titleLength,
-				descriptionLength: metadata.descriptionLength
-			},
+			pageTitle, // ✅ top-level title
+			metadata: safeMeta,
 			aiFeedback,
 			createdAt: new Date(),
-			hasIssues: metadata.imageCount === 0 || !metadata.hasFavicon
+			lastModified: new Date(),
+			hasIssues:
+				!safeMeta.pageTitle ||
+				!safeMeta.metaDescription ||
+				safeMeta.imageCount === 0 ||
+				!safeMeta.hasFavicon,
+			tags,
+			businessCategory
 		}
 
 		const result = await collection.insertOne(newReport)
 		const insertedId = result.insertedId.toString()
 
-		// Return the full report
+		// ✅ Return the full saved report
 		return NextResponse.json({
 			success: true,
 			report: {

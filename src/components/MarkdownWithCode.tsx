@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighterBase } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Button } from '@flavioespinoza/salsa-ui'
 import { Check, Copy } from 'lucide-react'
 
 interface MarkdownWithCodeProps {
@@ -31,7 +30,7 @@ const MarkdownWithCode: React.FC<MarkdownWithCodeProps> = ({ markdown }) => {
 				<div className="overflow-hidden rounded-md border border-zinc-200">
 					<div className="flex items-center justify-between bg-sage-600 px-3 font-mono text-[10px] text-white">
 						<span>{language}</span>
-						<Button variant="static" size="sm" className="p-0" onClick={handleCopy}>
+						<button className="btn-secondary" onClick={handleCopy}>
 							{copied ? (
 								<div className="flex">
 									<Check className="h-3.5 w-3 text-white" />
@@ -43,7 +42,7 @@ const MarkdownWithCode: React.FC<MarkdownWithCodeProps> = ({ markdown }) => {
 									<div className="ml-1 text-[10px] text-white">Copy</div>
 								</div>
 							)}
-						</Button>
+						</button>
 					</div>
 					<SyntaxHighlighter
 						style={vscDarkPlus}

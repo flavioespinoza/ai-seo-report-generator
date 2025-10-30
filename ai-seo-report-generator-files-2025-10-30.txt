@@ -1,0 +1,2169 @@
+===== src/types/report.ts =====
+export interface Metadata {
+	pageTitle: string | null
+	metaDescription: string | null
+	metaKeywords: string | null
+	h1Tags: string[]
+	imageCount: number
+	hasFavicon: boolean
+	titleLength?: number
+	descriptionLength?: number
+}
+
+export interface Report {
+	_id?: string
+	url: string
+	pageTitle?: string
+	metadata: {
+		pageTitle?: string
+		metaDescription?: string
+		metaKeywords?: string[]
+		h1Tags?: string[]
+		imageCount?: number
+		hasFavicon?: boolean
+		titleLength?: number
+		descriptionLength?: number
+	}
+	aiFeedback?: string | object
+	createdAt: Date
+	lastModified: Date
+	hasIssues: boolean
+	tags: string[]
+	businessCategory?: string | null
+}
+
+export interface ReportSummary {
+	_id?: string
+	id?: string | number
+	url: string
+	pageTitle: string | null
+	metaDescription: string | null
+	createdAt: string
+	lastModified?: string
+	hasIssues: boolean
+	tags?: string[]
+	businessCategory?: string
+}
+
+interface ReportHistoryProps {
+	onViewReport: (id: string) => void
+	onDeleteReport: (id: string) => void
+	onExportPDF: (id: string) => void
+	onExportMarkdown: (id: string) => void
+	loading?: boolean
+	isReportView?: boolean
+	currentReportId?: string // ✅ add this
+}
+
+// Tag categories for filtering
+export const SEO_STATUS_TAGS = [
+	'Optimized',
+	'Needs Improvement',
+	'Critical Issues',
+	'Newly Analyzed'
+] as const
+
+export const TECHNICAL_SEO_TAGS = [
+	'Missing Meta Description',
+	'Missing Title Tag',
+	'No H1 Tag',
+	'Multiple H1 Tags',
+	'No Favicon',
+	'No Images',
+	'Title Too Short',
+	'Title Too Long',
+	'Description Too Short',
+	'Description Too Long'
+] as const
+
+export const BUSINESS_CATEGORY_TAGS = [
+	'E-commerce',
+	'SaaS',
+	'Blog/Content',
+	'Portfolio',
+	'Corporate',
+	'Local Business',
+	'Healthcare',
+	'Education',
+	'Non-profit',
+	'Real Estate',
+	'Finance',
+	'Technology',
+	'Media/Entertainment',
+	'Food & Beverage',
+	'Other'
+] as const
+
+export type SeoStatusTag = (typeof SEO_STATUS_TAGS)[number]
+export type TechnicalSeoTag = (typeof TECHNICAL_SEO_TAGS)[number]
+export type BusinessCategoryTag = (typeof BUSINESS_CATEGORY_TAGS)[number]
+export type ReportTag = SeoStatusTag | TechnicalSeoTag | BusinessCategoryTag
+
+export const ALL_TAGS = [
+	...SEO_STATUS_TAGS,
+	...TECHNICAL_SEO_TAGS,
+	...BUSINESS_CATEGORY_TAGS
+] as const
+===== src/app/theme-preview-page/page.tsx =====
+export default function ThemePreview() {
+  return (
+    <div className="max-w-5xl mx-auto space-y-8 py-12">
+      <h1 className="text-3xl font-bold mb-6">Theme Preview</h1>
+
+      <div className="flex flex-wrap gap-3">
+        <button className="btn-primary">Primary</button>
+        <button className="btn-secondary">Secondary</button>
+        <button className="btn-outline">Outline</button>
+        <button className="btn-ghost">Ghost</button>
+        <button className="btn-danger">Danger</button>
+      </div>
+
+      <div className="card p-6 space-y-4">
+        <h2 className="text-lg font-semibold">Card Example</h2>
+        <p className="text-gray-600">Body text, spacing, background, and dark mode test.</p>
+      </div>
+
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Column A</th>
+              <th>Column B</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Example 1</td><td>Value 1</td></tr>
+            <tr><td>Example 2</td><td>Value 2</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+===== src/app/layout.tsx =====
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import RecoilProvider from '@/components/providers/RecoilProvider'
+import '@/styles/globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+	title: 'SEO Report Generator - AI-Powered Website Analysis',
+	description: 'Generate comprehensive SEO reports for any website using AI-powered analysis'
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+	return (
+		<html lang="en">
+			<body className={inter.className}>
+				<RecoilProvider>{children}</RecoilProvider>
+			</body>
+		</html>
+	)
+}
+===== src/app/api/analyze/route.ts =====
+import { NextRequest, NextResponse } from 'next/server'
+import clientPromise from '@/lib/db'
+import { detectBusinessCategory, generateTagsFromMetadata } from '@/lib/generateTags'
+import { generateSeoFeedback } from '@/lib/openai'
+import { ScraperError, scrapeMetadata } from '@/lib/scraper'
+import type { Report } from '@/types/report'
+import { z } from 'zod'
+
+const analyzeSchema = z.object({
+	url: z.string().url('Please provide a valid URL')
+})
+
+export async function POST(request: NextRequest) {
+	try {
+		const body = await request.json()
+		const validation = analyzeSchema.safeParse(body)
+
+		if (!validation.success) {
+			return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 })
+		}
+
+		const { url } = validation.data
+
+		// 🕷️ Scrape metadata from the target URL
+		let metadata
+		try {
+			metadata = await scrapeMetadata(url)
+		} catch (error) {
+			if (error instanceof ScraperError) {
+				return NextResponse.json({ error: error.message }, { status: error.statusCode || 400 })
+			}
+			throw error
+		}
+
+		// 🧠 Generate AI-based SEO feedback
+		const aiFeedback = await generateSeoFeedback(metadata)
+
+		// 🏷️ Derive tags & business category
+		const tags = generateTagsFromMetadata(metadata, aiFeedback)
+		const businessCategory = detectBusinessCategory(metadata, aiFeedback, url)
+
+		// ✅ Normalize nulls → undefined (TypeScript-safe)
+		const safeMeta = {
+			pageTitle: metadata.pageTitle ?? undefined,
+			metaDescription: metadata.metaDescription ?? undefined,
+			metaKeywords: Array.isArray(metadata.metaKeywords)
+				? metadata.metaKeywords
+				: metadata.metaKeywords
+					? [metadata.metaKeywords]
+					: undefined,
+			h1Tags: metadata.h1Tags ?? undefined,
+			imageCount: metadata.imageCount ?? undefined,
+			hasFavicon: metadata.hasFavicon ?? undefined,
+			titleLength: metadata.titleLength ?? undefined,
+			descriptionLength: metadata.descriptionLength ?? undefined
+		}
+
+		// ✅ Always store a top-level pageTitle with a fallback
+		const pageTitle = safeMeta.pageTitle?.trim() || '(No title)'
+
+		// 💾 Save report to MongoDB
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<Report>('reports')
+
+		const newReport: Report = {
+			url: metadata.url,
+			pageTitle, // ✅ top-level title
+			metadata: safeMeta,
+			aiFeedback,
+			createdAt: new Date(),
+			lastModified: new Date(),
+			hasIssues:
+				!safeMeta.pageTitle ||
+				!safeMeta.metaDescription ||
+				safeMeta.imageCount === 0 ||
+				!safeMeta.hasFavicon,
+			tags,
+			businessCategory
+		}
+
+		const result = await collection.insertOne(newReport)
+		const insertedId = result.insertedId.toString()
+
+		// ✅ Return the full saved report
+		return NextResponse.json({
+			success: true,
+			report: {
+				_id: insertedId,
+				...newReport
+			}
+		})
+	} catch (error) {
+		console.error('Analysis error:', error)
+		return NextResponse.json(
+			{
+				error:
+					error instanceof Error ? error.message : 'Failed to analyze website. Please try again.'
+			},
+			{ status: 500 }
+		)
+	}
+}
+===== src/app/api/reports/route.ts =====
+import { NextResponse } from 'next/server'
+import clientPromise from '@/lib/db'
+
+export async function GET() {
+	try {
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo-reports')
+
+		// ✅ include pageTitle so the report history list can show it
+		const reports = await db
+			.collection('reports')
+			.find(
+				{},
+				{
+					projection: {
+						url: 1,
+						pageTitle: 1, // 👈 add this line
+						createdAt: 1,
+						tags: 1,
+						businessCategory: 1
+					}
+				}
+			)
+			.sort({ createdAt: -1 })
+			.toArray()
+
+		return NextResponse.json({ success: true, reports })
+	} catch (error) {
+		console.error('Error loading reports:', error)
+		return NextResponse.json({ success: false, error: 'Failed to load reports' }, { status: 500 })
+	}
+}
+===== src/app/api/reports/[id]/route.ts =====
+import { NextResponse } from 'next/server'
+import clientPromise from '@/lib/db'
+import type { Report } from '@/types/report'
+import { ObjectId } from 'mongodb'
+
+// Extend Report to support ObjectId on the backend
+interface DbReport extends Omit<Report, '_id'> {
+	_id?: string | ObjectId
+}
+
+export async function GET(request: Request, { params }: { params: { id: string } }) {
+	try {
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<DbReport>('reports')
+
+		let query: { _id: ObjectId }
+		try {
+			query = { _id: new ObjectId(params.id) }
+		} catch {
+			return NextResponse.json({ success: false, error: 'Invalid report ID.' }, { status: 400 })
+		}
+
+		const report = await collection.findOne(query)
+		if (!report) {
+			return NextResponse.json({ success: false, error: 'Report not found.' }, { status: 404 })
+		}
+
+		return NextResponse.json({
+			success: true,
+			report: { ...report, _id: report._id?.toString() }
+		})
+	} catch (error) {
+		console.error('Error in GET /api/reports/[id]:', error)
+		return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
+	}
+}
+
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+	try {
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<DbReport>('reports')
+
+		let query: { _id: ObjectId }
+		try {
+			query = { _id: new ObjectId(params.id) }
+		} catch {
+			return NextResponse.json({ success: false, error: 'Invalid report ID.' }, { status: 400 })
+		}
+
+		const result = await collection.deleteOne(query)
+		if (result.deletedCount === 0) {
+			return NextResponse.json({ success: false, error: 'Report not found.' }, { status: 404 })
+		}
+
+		return NextResponse.json({ success: true })
+	} catch (error) {
+		console.error('Error in DELETE /api/reports/[id]:', error)
+		return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
+	}
+}
+===== src/app/page.tsx =====
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import { useSetRecoilState } from 'recoil'
+import { reportHistoryState, reportTagsState } from '@/state/atoms'
+import ErrorAlert from '@/components/ErrorAlert'
+import ReportHistory from '@/components/ReportHistory'
+import SeoReport from '@/components/SeoReport'
+import UrlInputForm, { UrlInputFormRef } from '@/components/UrlInputForm'
+import { exportToPDF, generateMarkdown } from '@/lib/export'
+import type { Report, ReportSummary } from '@/types/report'
+
+export default function Home() {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [currentReport, setCurrentReport] = useState<Report | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(true)
+  const urlInputRef = useRef<UrlInputFormRef>(null)
+
+  // Recoil setters
+  const setReportHistory = useSetRecoilState(reportHistoryState)
+  const setReportTags = useSetRecoilState(reportTagsState)
+
+  useEffect(() => {
+    loadReports()
+  }, [])
+
+  const loadReports = async () => {
+    try {
+      setHistoryLoading(true)
+      const response = await fetch('/api/reports')
+      if (!response.ok) throw new Error('Failed to load reports')
+      const data = await response.json()
+
+      if (data.success && Array.isArray(data.reports)) {
+        setReportHistory(data.reports)
+        setReportTags(extractTags(data.reports))
+      }
+    } catch {
+      setError('Failed to load reports')
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  // Collect unique tags from summaries (for initial filter population)
+  const extractTags = (reports: ReportSummary[]): string[] => {
+    const tags = new Set<string>()
+    reports.forEach(r => {
+      r.tags?.forEach(t => tags.add(t))
+      if (r.businessCategory) tags.add(r.businessCategory)
+    })
+    return Array.from(tags)
+  }
+
+  const handleAnalyze = async (url: string) => {
+    setError(null)
+    setLoading(true)
+    setCurrentReport(null)
+
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to analyze website')
+
+      if (data.success && data.report) {
+        setCurrentReport(data.report)
+        await loadReports()
+      } else throw new Error('Invalid response format')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleViewReport = async (id: string) => {
+    try {
+      const response = await fetch(`/api/reports/${id}`)
+      const data = await response.json()
+      if (data.success && data.report) {
+        setCurrentReport(data.report)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else setError('Failed to load report')
+    } catch {
+      setError('Failed to load report')
+    }
+  }
+
+  const handleDeleteReport = async (id: string) => {
+    try {
+      const response = await fetch(`/api/reports/${id}`, { method: 'DELETE' })
+      const data = await response.json()
+
+      if (data.success) {
+        await loadReports()
+        if (currentReport && currentReport._id === id) {
+          setCurrentReport(null)
+        }
+      } else setError(data.error || 'Failed to delete report')
+    } catch {
+      setError('Failed to delete report')
+    }
+  }
+
+  const handleExportPDF = async (id?: string) => {
+    try {
+      let reportToExport = currentReport
+      if (id && (!currentReport || currentReport._id !== id)) {
+        const response = await fetch(`/api/reports/${id}`)
+        const data = await response.json()
+        if (data.success && data.report) reportToExport = data.report
+      }
+      if (reportToExport) await exportToPDF('seo-report-content', reportToExport.url)
+    } catch {
+      setError('Failed to export PDF')
+    }
+  }
+
+  const handleExportMarkdown = async (id?: string) => {
+    try {
+      let reportToExport = currentReport
+      if (id && (!currentReport || currentReport._id !== id)) {
+        const response = await fetch(`/api/reports/${id}`)
+        const data = await response.json()
+        if (data.success && data.report) reportToExport = data.report
+      }
+      if (reportToExport) {
+        const markdown = generateMarkdown({
+          url: reportToExport.url,
+          metadata: {
+            pageTitle: reportToExport.metadata.pageTitle ?? null,
+            metaDescription: reportToExport.metadata.metaDescription ?? null,
+            metaKeywords: reportToExport.metadata.metaKeywords
+              ? reportToExport.metadata.metaKeywords.join(', ')
+              : null,
+            h1Tags: reportToExport.metadata.h1Tags ?? [],
+            imageCount: reportToExport.metadata.imageCount ?? 0,
+            hasFavicon: reportToExport.metadata.hasFavicon ?? false
+          },
+          aiFeedback:
+            typeof reportToExport.aiFeedback === 'string'
+              ? reportToExport.aiFeedback
+              : JSON.stringify(reportToExport.aiFeedback, null, 2),
+          createdAt:
+            typeof reportToExport.createdAt === 'string'
+              ? reportToExport.createdAt
+              : reportToExport.createdAt?.toISOString()
+        })
+
+        const blob = new Blob([markdown], { type: 'text/markdown' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `seo-report-${reportToExport.url.replace(/https?:\/\//, '')}.md`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
+    } catch {
+      setError('Failed to export Markdown')
+    }
+  }
+
+  const handleBackToList = () => {
+    setCurrentReport(null)
+    setError(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    urlInputRef.current?.focusInput()
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      {/* Header */}
+      <header className="text-center py-8 md:py-12">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">
+          SEO Report Generator
+        </h1>
+        <p className="text-base md:text-lg text-gray-700">
+          AI-powered website analysis to improve your search engine optimization
+        </p>
+      </header>
+
+      {/* ✅ Single, unified responsive container */}
+      <main className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-8">
+        {/* URL Input */}
+        <div className="mt-4">
+          <UrlInputForm ref={urlInputRef} onAnalyze={handleAnalyze} loading={loading} />
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div>
+            <ErrorAlert message={error} onDismiss={() => setError(null)} />
+          </div>
+        )}
+
+        {/* Views */}
+        {currentReport ? (
+          // Report View: Sidebar history + report content
+          <div className="grid grid-cols-1 lg:grid-cols-[320px,1fr] gap-6 items-start">
+            <aside className="min-w-0">
+              <ReportHistory
+                onViewReport={handleViewReport}
+                onDeleteReport={handleDeleteReport}
+                onExportPDF={handleExportPDF}
+                onExportMarkdown={handleExportMarkdown}
+                loading={historyLoading}
+                isReportView={true}
+                currentReportId={currentReport._id}
+              />
+            </aside>
+            <div className="min-w-0">
+              <SeoReport
+                report={currentReport}
+                onExportPDF={() => handleExportPDF()}
+                onExportMarkdown={() => handleExportMarkdown()}
+                onBackToList={handleBackToList}
+              />
+            </div>
+          </div>
+        ) : (
+          // List View: Filters + report list (single component)
+          <div className="min-w-0">
+            <ReportHistory
+              onViewReport={handleViewReport}
+              onDeleteReport={handleDeleteReport}
+              onExportPDF={handleExportPDF}
+              onExportMarkdown={handleExportMarkdown}
+              loading={historyLoading}
+              isReportView={false}
+            />
+          </div>
+        )}
+      </main>
+
+      <footer className="text-center py-10 text-sm text-gray-600 border-t border-gray-200 mt-auto">
+        Built with Next.js, TypeScript, and OpenAI
+      </footer>
+    </div>
+  )
+}
+===== src/utils/getTagColor.ts =====
+// Stronger, outlined color dots for filter list
+function getFilterDotColor(tag: string): string {
+  const lower = tag.toLowerCase()
+
+  if (
+    lower.includes('h1') ||
+    lower.includes('duplicate') ||
+    lower.includes('missing') ||
+    lower.includes('error')
+  )
+    return 'bg-red-100 border-red-500'
+
+  if (
+    lower.includes('improve') ||
+    lower.includes('needs') ||
+    lower.includes('slow') ||
+    lower.includes('warning') ||
+    lower.includes('poor') ||
+    lower.includes('low')
+  )
+    return 'bg-orange-100 border-orange-500'
+
+  if (
+    lower.includes('optimized') ||
+    lower.includes('passed') ||
+    lower.includes('ok') ||
+    lower.includes('good') ||
+    lower.includes('valid')
+  )
+    return 'bg-green-100 border-green-600'
+
+  if (
+    lower.includes('meta') ||
+    lower.includes('title') ||
+    lower.includes('description') ||
+    lower.includes('keyword') ||
+    lower.includes('schema')
+  )
+    return 'bg-blue-100 border-blue-500'
+
+  if (
+    lower.includes('accessibility') ||
+    lower.includes('contrast') ||
+    lower.includes('aria') ||
+    lower.includes('alt')
+  )
+    return 'bg-purple-100 border-purple-500'
+
+  if (
+    lower.includes('e-commerce') ||
+    lower.includes('ecommerce') ||
+    lower.includes('saas') ||
+    lower.includes('portfolio') ||
+    lower.includes('blog') ||
+    lower.includes('agency')
+  )
+    return 'bg-yellow-100 border-yellow-500'
+
+  if (
+    lower.includes('performance') ||
+    lower.includes('speed') ||
+    lower.includes('load') ||
+    lower.includes('core web vitals')
+  )
+    return 'bg-amber-100 border-amber-500'
+
+  if (
+    lower.includes('link') ||
+    lower.includes('anchor') ||
+    lower.includes('nofollow') ||
+    lower.includes('backlink')
+  )
+    return 'bg-cyan-100 border-cyan-500'
+
+  if (
+    lower.includes('content') ||
+    lower.includes('readability') ||
+    lower.includes('keyword density') ||
+    lower.includes('duplicate text')
+  )
+    return 'bg-slate-100 border-slate-500'
+
+  return 'bg-gray-100 border-gray-400'
+}
+===== src/state/atoms.ts =====
+import type { ReportSummary } from '@/types/report'
+import { atom, selector } from 'recoil'
+
+// All tags extracted from MongoDB reports
+export const reportTagsState = atom<string[]>({
+	key: 'reportTagsState',
+	default: []
+})
+
+// Store all report summaries
+export const reportHistoryState = atom<ReportSummary[]>({
+	key: 'reportHistoryState',
+	default: []
+})
+
+// Selector to generate unique tags dynamically from history
+export const derivedReportTagsState = selector<string[]>({
+	key: 'derivedReportTagsState',
+	get: ({ get }) => {
+		const reports = get(reportHistoryState)
+		const tags = new Set<string>()
+		reports.forEach((r) => {
+			r.tags?.forEach((t) => tags.add(t))
+			if (r.businessCategory) tags.add(r.businessCategory)
+		})
+		return Array.from(tags).sort((a, b) => a.localeCompare(b))
+	}
+})
+===== src/components/ExternalLink.tsx =====
+import React from 'react'
+
+interface ExternalLinkProps {
+	href: string
+	children: React.ReactNode
+	className?: string
+	target?: '_blank' | '_self' | '_parent' | '_top'
+	rel?: string
+}
+
+export default function ExternalLink({
+	href,
+	children,
+	className = '',
+	...rest
+}: ExternalLinkProps) {
+	return (
+		<a href={href} target={rest.target} rel="noopener noreferrer" className={className}>
+			{children}
+		</a>
+	)
+}
+===== src/components/ReportHistory.tsx =====
+'use client'
+
+import { useMemo, useState } from 'react'
+import { useRecoilValue } from 'recoil'
+import {
+  reportHistoryState,
+  reportTagsState
+} from '@/state/atoms'
+import {
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  FileDown,
+  FileText,
+  Search,
+  Trash2
+} from 'lucide-react'
+import ExternalLink from './ExternalLink'
+import DeleteConfirmDialog from './DeleteConfirmDialog'
+import { getTagColor } from '@/utils/getTagColor'
+
+interface ReportHistoryProps {
+  onViewReport: (id: string) => void
+  onDeleteReport: (id: string) => void
+  onExportPDF: (id: string) => void
+  onExportMarkdown: (id: string) => void
+  loading?: boolean
+  isReportView?: boolean
+  currentReportId?: string
+}
+
+type SortField = 'createdAt' | 'url'
+type SortDirection = 'asc' | 'desc'
+
+export default function ReportHistory({
+  onViewReport,
+  onDeleteReport,
+  onExportPDF,
+  onExportMarkdown,
+  loading = false,
+  isReportView = false,
+  currentReportId
+}: ReportHistoryProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [sortField, setSortField] = useState<SortField>('createdAt')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [showFilters, setShowFilters] = useState(true)
+
+  const reports = useRecoilValue(reportHistoryState)
+  const globalTags = useRecoilValue(reportTagsState)
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag)
+        ? prev.filter((t) => t !== tag)
+        : [...prev, tag]
+    )
+  }
+
+  const clearFilters = () => {
+    setSelectedTags([])
+    setSearchQuery('')
+  }
+
+  const filteredReports = useMemo(() => {
+    let filtered = [...reports]
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        (r) =>
+          r.url.toLowerCase().includes(q) ||
+          r.pageTitle?.toLowerCase().includes(q) ||
+          r.tags?.some((t) =>
+            t.toLowerCase().includes(q)
+          ) ||
+          r.businessCategory?.toLowerCase().includes(q)
+      )
+    }
+
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter((r) =>
+        selectedTags.every(
+          (tag) =>
+            r.tags?.includes(tag) ||
+            r.businessCategory === tag
+        )
+      )
+    }
+
+    filtered.sort((a, b) => {
+      if (sortField === 'createdAt') {
+        const aVal = new Date(a.createdAt).getTime()
+        const bVal = new Date(b.createdAt).getTime()
+        return sortDirection === 'asc'
+          ? aVal - bVal
+          : bVal - aVal
+      }
+      return sortDirection === 'asc'
+        ? a.url.localeCompare(b.url)
+        : b.url.localeCompare(a.url)
+    })
+
+    return filtered
+  }, [
+    reports,
+    searchQuery,
+    selectedTags,
+    sortField,
+    sortDirection
+  ])
+
+  const SortIcon =
+    sortDirection === 'asc' ? ChevronUp : ChevronDown
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={`flex ${
+        isReportView ? 'flex-col' : 'flex-col lg:flex-row'
+      } gap-6`}
+    >
+      {/* Sidebar Filters (hidden in report view) */}
+      {!isReportView && (
+        <aside className="w-full lg:w-[320px] xl:w-[340px] flex-shrink-0">
+          <div className="w-full rounded-lg bg-white p-4 shadow-md">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold">
+                Filters
+              </h2>
+              {(selectedTags.length > 0 ||
+                searchQuery) && (
+                <button
+                  onClick={clearFilters}
+                  className='btn-primary'
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-3">
+              <button
+                onClick={() =>
+                  setShowFilters(!showFilters)
+                }
+                className='btn-outline'
+              >
+                <span>Tags</span>
+                {showFilters ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )}
+              </button>
+
+              {showFilters && (
+                <div className="max-h-96 space-y-2 overflow-y-auto">
+                  {globalTags.length === 0 ? (
+                    <p className="px-2 text-sm italic text-gray-400">
+                      No tags yet...
+                    </p>
+                  ) : (
+                    globalTags.map((tag) => {
+                      const colorClass = getTagColor(tag)
+                      const bgClass = colorClass.split(' ')[0]
+                      return (
+                        <label
+                          key={tag}
+                          className="flex cursor-pointer items-center justify-between rounded p-2 text-xs hover:bg-gray-50"
+                        >
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedTags.includes(tag)}
+                              onChange={() => toggleTag(tag)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-gray-700">
+                              {tag}
+                            </span>
+                          </div>
+                          <span
+                            className={`h-3 w-3 rounded-full border border-gray-200 ${bgClass}`}
+                          />
+                        </label>
+                      )
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {/* Main Report Table */}
+      <div className="min-w-0 flex-1">
+        {/* Search */}
+        <div className="mb-4 flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400"
+              size={20}
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) =>
+                setSearchQuery(e.target.value)
+              }
+              placeholder="Search reports..."
+              className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        {filteredReports.length === 0 ? (
+          <div className="rounded-lg bg-white p-8 text-center text-gray-500 shadow-md">
+            No reports found.
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-lg bg-white shadow-md">
+            <div className="overflow-x-auto">
+              <table className="min-w-full table-fixed">
+                <thead className="border-b border-gray-200 bg-gray-50">
+                  <tr>
+                    <th
+                      className="w-[60%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700"
+                      onClick={() => setSortField('url')}
+                    >
+                      <div className="flex items-center gap-1 cursor-pointer hover:text-blue-600">
+                        Report
+                        {sortField === 'url' && (
+                          <SortIcon size={14} />
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="w-[20%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700"
+                      onClick={() => setSortField('createdAt')}
+                    >
+                      <div className="flex items-center gap-1 cursor-pointer hover:text-blue-600">
+                        Created
+                        {sortField === 'createdAt' && (
+                          <SortIcon size={14} />
+                        )}
+                      </div>
+                    </th>
+                    <th className="w-[20%] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-700">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-200">
+                  {filteredReports.map((r) => {
+                    const id = r._id || ''
+                    const active =
+                      id === currentReportId
+
+                    return (
+                      <tr
+                        key={id}
+                        className={`hover:bg-gray-50 ${
+                          active ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        {/* 🧱 Report Column */}
+                        <td className="px-4 py-3 align-top">
+                          <div className="flex flex-col gap-1">
+                            <ExternalLink
+                              href={r.url}
+                              target="_blank"
+                              className="truncate text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                              {r.url}
+                            </ExternalLink>
+                            <div className="text-xs text-gray-500 line-clamp-2">
+                              {r.pageTitle || '(No title)'}
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {r.tags?.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className={`inline-block rounded border px-2 py-1 text-[11px] font-semibold ${getTagColor(
+                                    tag
+                                  )}`}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {r.businessCategory && (
+                                <span
+                                  className={`inline-block rounded border px-2 py-1 text-[11px] font-semibold ${getTagColor(
+                                    r.businessCategory
+                                  )}`}
+                                >
+                                  {r.businessCategory}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* 🗓️ Created Column */}
+                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                          {new Date(
+                            r.createdAt
+                          ).toLocaleDateString()}
+                        </td>
+
+                        {/* ⚙️ Actions Column */}
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end gap-2 flex-wrap">
+                            <DeleteConfirmDialog
+                              onConfirm={() =>
+                                onDeleteReport(id)
+                              }
+                              trigger={
+                                <button className="btn-icon text-red-600">
+                                  <Trash2 size={18} />
+                                </button>
+                              }
+                            />
+                            <button
+                              onClick={() =>
+                                onExportPDF(id)
+                              }
+                              className="btn-icon text-gray-600"
+                            >
+                              <FileDown size={18} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                onExportMarkdown(id)
+                              }
+                              className="btn-icon"
+                            >
+                              <FileText size={18} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                onViewReport(id)
+                              }
+                              className="btn-icon text-blue-600"
+                            >
+                              <Eye size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+===== src/components/ExportButtons.tsx =====
+// src/components/ExportButtons.tsx
+import React from 'react'
+
+interface ExportButtonsProps {
+	onExportMarkdown: () => void
+	onExportPDF: () => void
+	onNewSearch: () => void
+	className?: string
+}
+
+export default function ExportButtons({
+	onExportMarkdown,
+	onExportPDF,
+	onNewSearch,
+	className = ''
+}: ExportButtonsProps) {
+	return (
+		<div className={`mb-8 flex flex-wrap items-center justify-between gap-3 ${className}`}>
+			<div className="flex items-center gap-3">
+				<button
+					onClick={onExportMarkdown}
+					className='btn-primary'
+				>
+					Export as Markdown
+				</button>
+				<button
+					onClick={onExportPDF}
+					className='btn-danger'
+				>
+					Export as PDF
+				</button>
+			</div>
+
+			<div className="flex flex-1 justify-end sm:flex-none">
+				<button
+					onClick={onNewSearch}
+					className='btn-outline'
+				>
+					New Search
+				</button>
+			</div>
+		</div>
+	)
+}
+===== src/components/Icon.tsx =====
+import React from 'react'
+
+export default function Icon() {
+	return <div>Icon</div>
+}
+===== src/components/providers/RecoilProvider.tsx =====
+'use client'
+
+import { ReactNode } from 'react'
+import { RecoilRoot } from 'recoil'
+
+export default function RecoilProvider({ children }: { children: ReactNode }) {
+	return <RecoilRoot>{children}</RecoilRoot>
+}
+===== src/components/UrlInputForm.tsx =====
+'use client'
+
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+
+export interface UrlInputFormRef {
+	focusInput: () => void
+	clearInput: () => void
+}
+
+interface UrlInputFormProps {
+	onAnalyze: (url: string) => void
+	loading?: boolean
+}
+
+const UrlInputForm = forwardRef<UrlInputFormRef, UrlInputFormProps>(
+	({ onAnalyze, loading = false }, ref) => {
+		const [url, setUrl] = useState('')
+		const inputRef = useRef<HTMLInputElement>(null)
+
+		useImperativeHandle(ref, () => ({
+			focusInput: () => {
+				inputRef.current?.focus()
+			},
+			clearInput: () => {
+				setUrl('')
+			}
+		}))
+
+		const handleSubmit = (e: React.FormEvent) => {
+			e.preventDefault()
+			let normalizedUrl = url.trim()
+			if (!normalizedUrl || loading) return
+
+			// Automatically add https:// if missing
+			if (!/^https?:\/\//i.test(normalizedUrl)) {
+				normalizedUrl = `https://${normalizedUrl}`
+			}
+
+			onAnalyze(normalizedUrl)
+		}
+
+		return (
+			<form
+				onSubmit={handleSubmit}
+				className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md"
+			>
+				<div>
+					<label htmlFor="url-input" className="text-gray-900 mb-2 block text-lg font-semibold">
+						Website URL
+					</label>
+
+					<div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+						<div className="min-w-0 flex-1">
+							<input
+								ref={inputRef}
+								id="url-input"
+								type="text"
+								value={url}
+								onChange={(e) => setUrl(e.target.value)}
+								placeholder="https://example.com or example.com"
+								className="text-gray-800 inset-shadow-sm inset-shadow-blue-500 w-full rounded-md border border-[#bdbdbd] bg-blue-100 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								disabled={loading}
+								required
+							/>
+						</div>
+
+						<div className="mt-3 flex-shrink-0 sm:mt-0">
+							<button
+								type="submit"
+								disabled={loading}
+								className='btn-primary'
+							>
+								{loading ? 'Analyzing...' : 'Analyze SEO'}
+							</button>
+						</div>
+					</div>
+
+					<p className="text-gray-600 mt-2 text-sm">
+						Enter any website URL to receive a comprehensive SEO analysis powered by AI
+					</p>
+				</div>
+			</form>
+		)
+	}
+)
+
+UrlInputForm.displayName = 'UrlInputForm'
+export default UrlInputForm
+===== src/components/ErrorAlert.tsx =====
+import React from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { Button } from '@flavioespinoza/salsa-ui'
+import { AlertCircle, X } from 'lucide-react'
+
+interface ErrorAlertProps {
+	message: string
+	onDismiss?: () => void
+}
+
+export default function ErrorAlert({ message, onDismiss }: ErrorAlertProps) {
+	const [open, setOpen] = React.useState(true)
+
+	const handleOpenChange = (isOpen: boolean) => {
+		setOpen(isOpen)
+		if (!isOpen && onDismiss) {
+			onDismiss()
+		}
+	}
+
+	return (
+		<Dialog.Root open={open} onOpenChange={handleOpenChange}>
+			<Dialog.Portal>
+				<Dialog.Overlay className="fixed inset-0 bg-black/50" />
+				<Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2">
+					<div className="bg-red-100 p-6">
+						<div className="flex items-start justify-between gap-4">
+							<div className="flex items-center gap-3">
+								<AlertCircle className="h-6 w-6 flex-shrink-0 text-red-600" />
+								<Dialog.Title className="text-lg font-semibold text-red-600">Error</Dialog.Title>
+							</div>
+							<Dialog.Close className="text-gray-400 flex-shrink-0 transition hover:text-red-600">
+								<X className="h-5 w-5 text-red-600" />
+							</Dialog.Close>
+						</div>
+
+						{/* Wrapped message in scrollable div */}
+						<Dialog.Description className="mt-4 text-sm text-red-600">
+							<div className="overflow-hidden">{message}</div>
+						</Dialog.Description>
+
+						<div className="mt-6 flex justify-end">
+							<Dialog.Close asChild>
+								<Button variant="default" className="btn-danger">
+									Close
+								</Button>
+							</Dialog.Close>
+						</div>
+					</div>
+				</Dialog.Content>
+			</Dialog.Portal>
+		</Dialog.Root>
+	)
+}
+===== src/components/MarkdownWithCode.tsx =====
+'use client'
+
+import React, { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import { Prism as SyntaxHighlighterBase } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { Check, Copy } from 'lucide-react'
+
+interface MarkdownWithCodeProps {
+	markdown: string
+}
+
+const MarkdownWithCode: React.FC<MarkdownWithCodeProps> = ({ markdown }) => {
+	const CodeBlock = ({ node, inline, className, children, ...props }: any): JSX.Element => {
+		const match = /language-(\w+)/.exec(className || '')
+		const language = match ? match[1] : null
+		const [copied, setCopied] = useState(false)
+
+		const handleCopy = () => {
+			navigator.clipboard.writeText(String(children)).then(() => {
+				setCopied(true)
+				setTimeout(() => setCopied(false), 4000)
+			})
+		}
+
+		const SyntaxHighlighter = SyntaxHighlighterBase as unknown as React.ComponentType<any>
+
+		if (!inline && language) {
+			return (
+				<div className="overflow-hidden rounded-md border border-zinc-200">
+					<div className="flex items-center justify-between bg-sage-600 px-3 font-mono text-[10px] text-white">
+						<span>{language}</span>
+						<button className="btn-secondary" onClick={handleCopy}>
+							{copied ? (
+								<div className="flex">
+									<Check className="h-3.5 w-3 text-white" />
+									<div className="ml-1 text-[10px] text-white">Copied</div>
+								</div>
+							) : (
+								<div className="flex">
+									<Copy className="h-3.5 w-3 text-white" />
+									<div className="ml-1 text-[10px] text-white">Copy</div>
+								</div>
+							)}
+						</button>
+					</div>
+					<SyntaxHighlighter
+						style={vscDarkPlus}
+						language={language}
+						PreTag="div"
+						customStyle={{
+							margin: 0,
+							padding: '1rem',
+							fontSize: '0.875rem'
+						}}
+						{...props}
+					>
+						<div id="parent">{String(children).replace(/\n$/, '')}</div>
+					</SyntaxHighlighter>
+				</div>
+			)
+		}
+
+		return (
+			<code className={className} {...props}>
+				{children}
+			</code>
+		)
+	}
+
+	return (
+		<div className="markdown-parent-element">
+			<ReactMarkdown
+				components={{
+					code: CodeBlock
+				}}
+			>
+				{markdown}
+			</ReactMarkdown>
+		</div>
+	)
+}
+
+export default MarkdownWithCode
+===== src/components/SeoReport.tsx =====
+'use client'
+
+import { Report } from '@/types/report'
+import { getTagColor } from '@/utils/getTagColor'
+import { ArrowLeft, FileDown, FileText } from 'lucide-react'
+
+interface SeoReportProps {
+	report: Report
+	onExportPDF: () => void
+	onExportMarkdown: () => void
+	onBackToList: () => void
+}
+
+export default function SeoReport({
+	report,
+	onExportPDF,
+	onExportMarkdown,
+	onBackToList
+}: SeoReportProps) {
+	if (!report) return null
+
+	return (
+		<div className="w-full rounded-lg bg-white p-6 shadow-md sm:p-8">
+			{/* 🧭 Header Section */}
+			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+				<div>
+					<button
+						onClick={onBackToList}
+						className='btn-outline'
+					>
+						<ArrowLeft size={16} />
+						Back to List
+					</button>
+
+					<h2 className="text-gray-900 mt-3 break-words text-2xl font-bold">
+						{report.pageTitle || '(Untitled Page)'}
+					</h2>
+					<p className="text-gray-600 mt-1 break-all text-sm">{report.url}</p>
+				</div>
+
+				<div className="flex flex-wrap gap-2">
+					<button
+						onClick={onExportPDF}
+						className='btn-danger'
+					>
+						<FileDown size={16} />
+						PDF
+					</button>
+					<button
+						onClick={onExportMarkdown}
+						className='btn-primary'
+					>
+						<FileText size={16} />
+						Markdown
+					</button>
+				</div>
+			</div>
+
+			{/* 🏷️ Tags */}
+			{report.tags && report.tags.length > 0 && (
+				<div className="mb-6 flex flex-wrap gap-2">
+					{report.tags.map((tag) => (
+						<span
+							key={tag}
+							className={`inline-block rounded border px-3 py-1 text-xs font-semibold ${getTagColor(
+								tag
+							)}`}
+						>
+							{tag}
+						</span>
+					))}
+					{report.businessCategory && (
+						<span
+							className={`inline-block rounded border px-3 py-1 text-xs font-semibold ${getTagColor(
+								report.businessCategory
+							)}`}
+						>
+							{report.businessCategory}
+						</span>
+					)}
+				</div>
+			)}
+
+			{/* 📊 Metadata Section */}
+			<section className="mb-8">
+				<h3 className="text-gray-900 mb-3 text-lg font-semibold">Metadata Overview</h3>
+				<div className="text-gray-700 space-y-2 text-sm">
+					<p>
+						<strong>Title:</strong> {report.metadata?.pageTitle || 'N/A'}
+					</p>
+					<p>
+						<strong>Description:</strong> {report.metadata?.metaDescription || 'N/A'}
+					</p>
+					<p>
+						<strong>Keywords:</strong> {report.metadata?.metaKeywords?.join(', ') || 'N/A'}
+					</p>
+					<p>
+						<strong>H1 Tags:</strong> {report.metadata?.h1Tags?.join(', ') || 'N/A'}
+					</p>
+					<p>
+						<strong>Images Found:</strong> {report.metadata?.imageCount ?? 'N/A'}
+					</p>
+					<p>
+						<strong>Favicon:</strong> {report.metadata?.hasFavicon ? 'Yes' : 'No'}
+					</p>
+				</div>
+			</section>
+
+			{/* 🤖 AI Feedback */}
+			<section>
+				<h3 className="text-gray-900 mb-3 text-lg font-semibold">AI Feedback</h3>
+				<div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
+					{typeof report.aiFeedback === 'string'
+						? report.aiFeedback
+						: JSON.stringify(report.aiFeedback, null, 2)}
+				</div>
+			</section>
+		</div>
+	)
+}
+===== src/components/DeleteConfirmDialog.tsx =====
+'use client'
+
+import { useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
+
+interface DeleteConfirmDialogProps {
+	onConfirm: () => void
+	triggerLabel?: string
+	title?: string
+	description?: string
+	/** Optional custom trigger (icon/button). If provided, it's rendered asChild. */
+	trigger?: React.ReactNode
+}
+
+export default function DeleteConfirmDialog({
+	onConfirm,
+	triggerLabel = 'Delete',
+	title = 'Delete Report?',
+	description = 'Are you sure you want to delete this report? This action cannot be undone.',
+	trigger
+}: DeleteConfirmDialogProps) {
+	const [open, setOpen] = useState(false)
+
+	const handleConfirm = () => {
+		onConfirm()
+		setOpen(false)
+	}
+
+	return (
+		<Dialog.Root open={open} onOpenChange={setOpen}>
+			{trigger ? (
+				<Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
+			) : (
+				<Dialog.Trigger asChild>
+					<button className="btn-primary">
+						{triggerLabel}
+					</button>
+				</Dialog.Trigger>
+			)}
+
+			<Dialog.Portal>
+				<Dialog.Overlay className="data-[state=open]:animate-fadeIn fixed inset-0 bg-black/40" />
+				<Dialog.Content className="data-[state=open]:animate-fadeIn fixed left-1/2 top-1/2 w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-lg focus:outline-none">
+					<Dialog.Title className="text-gray-900 mb-2 text-lg font-semibold">{title}</Dialog.Title>
+					<Dialog.Description className="text-gray-600 mb-6 text-sm">
+						{description}
+					</Dialog.Description>
+
+					<div className="flex justify-end gap-3">
+						<Dialog.Close asChild>
+							<button className='btn-primary'>
+								Cancel
+							</button>
+						</Dialog.Close>
+						<button
+							onClick={handleConfirm}
+							className='btn-danger'
+						>
+							Delete
+						</button>
+					</div>
+				</Dialog.Content>
+			</Dialog.Portal>
+		</Dialog.Root>
+	)
+}
+===== src/lib/openai.ts =====
+import OpenAI from 'openai'
+import { PageMetadata, validateMetadata } from './scraper'
+
+console.log(process.env.OPENAI_API_KEY)
+
+const openai = new OpenAI({
+	apiKey: process.env.OPENAI_API_KEY
+})
+
+export interface SeoAnalysis {
+	summary: string
+	strengths: string[]
+	improvements: string[]
+	technicalIssues: string[]
+	recommendations: string[]
+}
+
+export async function generateSeoFeedback(metadata: PageMetadata): Promise<string> {
+	const { issues, warnings } = validateMetadata(metadata)
+
+	// Beginning of prompt
+	const prompt = `You are an expert SEO consultant. Analyze the following webpage metadata and provide actionable SEO improvement recommendations.
+
+Website URL: ${metadata.url}
+
+Metadata:
+- Page Title: ${metadata.pageTitle || 'MISSING'}
+- Title Length: ${metadata.titleLength} characters
+- Meta Description: ${metadata.metaDescription || 'MISSING'}
+- Description Length: ${metadata.descriptionLength} characters
+- Meta Keywords: ${metadata.metaKeywords || 'Not specified'}
+- H1 Tags: ${metadata.h1Tags.length > 0 ? metadata.h1Tags.join(', ') : 'NONE FOUND'}
+- Number of Images: ${metadata.imageCount}
+- Has Favicon: ${metadata.hasFavicon ? 'Yes' : 'No'}
+
+Automated Issues Detected:
+${issues.length > 0 ? issues.map((i) => `- ${i}`).join('\n') : '- None'}
+
+Automated Warnings:
+${warnings.length > 0 ? warnings.map((w) => `- ${w}`).join('\n') : '- None'}
+
+Please provide:
+1. A brief overall SEO health summary (2-3 sentences)
+2. Key strengths (if any)
+3. Critical improvements needed
+4. Technical SEO issues
+5. Specific, actionable recommendations
+
+Format your response in clear sections with bullet points where appropriate. Be specific and practical.`
+
+	// End of prompt
+
+	try {
+		const response = await openai.chat.completions.create({
+			model: 'gpt-4o-mini',
+			messages: [
+				{
+					role: 'system',
+					content:
+						'You are an expert SEO consultant providing clear, actionable advice. Focus on practical improvements that will have the most impact.'
+				},
+				{
+					role: 'user',
+					content: prompt
+				}
+			],
+			temperature: 0.7,
+			max_tokens: 1000
+		})
+
+		const feedback = response.choices[0]?.message?.content
+
+		if (!feedback) {
+			throw new Error('No feedback generated from OpenAI')
+		}
+
+		return feedback
+	} catch (error) {
+		if (error instanceof Error) {
+			throw new Error(`OpenAI API error: ${error.message}`)
+		}
+		throw new Error('Failed to generate SEO feedback')
+	}
+}
+
+export function parseSeoFeedback(feedback: string): SeoAnalysis {
+	const lines = feedback.split('\n')
+	const analysis: SeoAnalysis = {
+		summary: '',
+		strengths: [],
+		improvements: [],
+		technicalIssues: [],
+		recommendations: []
+	}
+
+	let currentSection: keyof SeoAnalysis | null = null
+	let summaryLines: string[] = []
+
+	for (const line of lines) {
+		const trimmed = line.trim()
+
+		if (!trimmed) continue
+
+		if (trimmed.toLowerCase().includes('summary') || trimmed.toLowerCase().includes('overall')) {
+			currentSection = 'summary'
+			continue
+		} else if (trimmed.toLowerCase().includes('strength')) {
+			currentSection = 'strengths'
+			continue
+		} else if (
+			trimmed.toLowerCase().includes('improvement') ||
+			trimmed.toLowerCase().includes('critical')
+		) {
+			currentSection = 'improvements'
+			continue
+		} else if (trimmed.toLowerCase().includes('technical')) {
+			currentSection = 'technicalIssues'
+			continue
+		} else if (trimmed.toLowerCase().includes('recommendation')) {
+			currentSection = 'recommendations'
+			continue
+		}
+
+		if (currentSection === 'summary') {
+			if (!trimmed.startsWith('-') && !trimmed.startsWith('*') && !trimmed.match(/^\d+\./)) {
+				summaryLines.push(trimmed)
+			}
+		} else if (
+			currentSection !== null &&
+			(trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.match(/^\d+\./))
+		) {
+			const content = trimmed
+				.replace(/^[-*]\s*/, '')
+				.replace(/^\d+\.\s*/, '')
+				.trim()
+			if (content) {
+				analysis[currentSection].push(content)
+			}
+		}
+	}
+
+	analysis.summary = summaryLines.join(' ').trim()
+
+	return analysis
+}
+===== src/lib/generateTags.ts =====
+import type { Metadata, ReportTag } from '@/types/report'
+
+export function generateTagsFromMetadata(metadata: Metadata, aiFeedback: string): ReportTag[] {
+	const tags: ReportTag[] = []
+
+	// Technical SEO tags based on metadata
+	if (!metadata.metaDescription) {
+		tags.push('Missing Meta Description')
+	}
+
+	if (!metadata.pageTitle) {
+		tags.push('Missing Title Tag')
+	}
+
+	if (metadata.h1Tags.length === 0) {
+		tags.push('No H1 Tag')
+	} else if (metadata.h1Tags.length > 1) {
+		tags.push('Multiple H1 Tags')
+	}
+
+	if (!metadata.hasFavicon) {
+		tags.push('No Favicon')
+	}
+
+	if (metadata.imageCount === 0) {
+		tags.push('No Images')
+	}
+
+	if (metadata.titleLength && metadata.titleLength < 30) {
+		tags.push('Title Too Short')
+	} else if (metadata.titleLength && metadata.titleLength > 60) {
+		tags.push('Title Too Long')
+	}
+
+	if (metadata.descriptionLength && metadata.descriptionLength < 120) {
+		tags.push('Description Too Short')
+	} else if (metadata.descriptionLength && metadata.descriptionLength > 160) {
+		tags.push('Description Too Long')
+	}
+
+	// SEO Health Status based on issues count
+	const criticalIssues = [
+		!metadata.metaDescription,
+		!metadata.pageTitle,
+		metadata.h1Tags.length === 0
+	].filter(Boolean).length
+
+	if (criticalIssues >= 2) {
+		tags.push('Critical Issues')
+	} else if (tags.length > 0) {
+		tags.push('Needs Improvement')
+	} else {
+		tags.push('Optimized')
+	}
+
+	return tags
+}
+
+export function detectBusinessCategory(
+	metadata: Metadata,
+	aiFeedback: string,
+	url: string
+): string {
+	const content =
+		`${metadata.pageTitle} ${metadata.metaDescription} ${metadata.h1Tags.join(' ')} ${aiFeedback}`.toLowerCase()
+
+	// E-commerce indicators
+	if (content.match(/shop|store|cart|product|buy|purchase|checkout|price/)) {
+		return 'E-commerce'
+	}
+
+	// SaaS indicators
+	if (content.match(/saas|software|platform|api|cloud|solution|tool|service/)) {
+		return 'SaaS'
+	}
+
+	// Blog/Content indicators
+	if (content.match(/blog|article|news|post|story|read|author/)) {
+		return 'Blog/Content'
+	}
+
+	// Portfolio indicators
+	if (content.match(/portfolio|work|project|case study|designer|developer|freelance/)) {
+		return 'Portfolio'
+	}
+
+	// Healthcare indicators
+	if (content.match(/health|medical|doctor|hospital|clinic|patient|care|treatment/)) {
+		return 'Healthcare'
+	}
+
+	// Education indicators
+	if (content.match(/education|school|university|course|learn|student|teacher|training/)) {
+		return 'Education'
+	}
+
+	// Non-profit indicators
+	if (content.match(/nonprofit|non-profit|charity|donate|foundation|cause/)) {
+		return 'Non-profit'
+	}
+
+	// Real Estate indicators
+	if (content.match(/real estate|property|home|house|apartment|rent|sale|listing/)) {
+		return 'Real Estate'
+	}
+
+	// Finance indicators
+	if (content.match(/finance|bank|investment|loan|credit|trading|insurance/)) {
+		return 'Finance'
+	}
+
+	// Technology indicators
+	if (content.match(/technology|tech|innovation|startup|ai|ml|data/)) {
+		return 'Technology'
+	}
+
+	// Media/Entertainment indicators
+	if (content.match(/entertainment|movie|music|video|streaming|media|film/)) {
+		return 'Media/Entertainment'
+	}
+
+	// Food & Beverage indicators
+	if (content.match(/restaurant|food|menu|cafe|coffee|dining|recipe|delivery/)) {
+		return 'Food & Beverage'
+	}
+
+	// Corporate indicators
+	if (content.match(/corporate|enterprise|business|company|about us|team|career/)) {
+		return 'Corporate'
+	}
+
+	// Local Business indicators
+	if (content.match(/local|location|hours|address|contact|near me/)) {
+		return 'Local Business'
+	}
+
+	return 'Other'
+}
+===== src/lib/export.ts =====
+// src/lib/export.ts
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
+
+/**
+ * Generate a markdown version of the SEO report
+ * Handles both string and object aiFeedback values safely.
+ */
+export function generateMarkdown(report: {
+	url: string
+	metadata: {
+		pageTitle: string | null
+		metaDescription: string | null
+		metaKeywords: string | null
+		h1Tags: string[]
+		imageCount: number
+		hasFavicon: boolean
+	}
+	aiFeedback?: string | object | undefined
+	createdAt?: string
+}): string {
+	const { metadata, aiFeedback, url, createdAt } = report
+
+	// Convert AI feedback to a clean string
+	const formattedFeedback =
+		typeof aiFeedback === 'string'
+			? aiFeedback
+			: aiFeedback
+				? JSON.stringify(aiFeedback, null, 2)
+				: 'No AI feedback available.'
+
+	// Ensure metadata safety
+	const safeMeta = {
+		pageTitle: metadata.pageTitle ?? 'Missing',
+		metaDescription: metadata.metaDescription ?? 'Missing',
+		metaKeywords: metadata.metaKeywords ?? 'Not specified',
+		h1Tags: metadata.h1Tags ?? [],
+		imageCount: metadata.imageCount ?? 0,
+		hasFavicon: metadata.hasFavicon ?? false
+	}
+
+	return `# SEO Report for ${url}
+
+**Generated:** ${createdAt ? new Date(createdAt).toLocaleString() : 'N/A'}
+
+---
+
+## 🏷 Page Metadata
+
+- **Title:** ${safeMeta.pageTitle}
+- **Description:** ${safeMeta.metaDescription}
+- **Keywords:** ${safeMeta.metaKeywords}
+- **Images:** ${safeMeta.imageCount}
+- **Favicon:** ${safeMeta.hasFavicon ? 'Present' : 'Missing'}
+- **H1 Tags:**  
+${safeMeta.h1Tags.length > 0 ? safeMeta.h1Tags.map((tag) => `  - ${tag}`).join('\n') : '  - None'}
+
+---
+
+## 🤖 AI-Powered SEO Analysis
+
+${formattedFeedback}
+`
+}
+
+/**
+ * Export the visible SEO report as a PDF.
+ * Captures the HTML content of an element by ID and converts it to a downloadable PDF file.
+ */
+export async function exportToPDF(elementId: string, url?: string): Promise<void> {
+	const element = document.getElementById(elementId)
+	if (!element) {
+		console.warn(`Element with id "${elementId}" not found.`)
+		return
+	}
+
+	// Render the HTML to canvas
+	const canvas = await html2canvas(element, {
+		scale: 2,
+		backgroundColor: '#ffffff'
+	})
+
+	// Convert the canvas to image data
+	const imgData = canvas.toDataURL('image/png')
+
+	// Create the PDF
+	const pdf = new jsPDF('p', 'mm', 'a4')
+	const width = pdf.internal.pageSize.getWidth()
+	const height = (canvas.height * width) / canvas.width
+	pdf.addImage(imgData, 'PNG', 0, 0, width, height)
+
+	// Build a safe domain name
+	const domain = (() => {
+		try {
+			const parsed = new URL(url || '')
+			return parsed.hostname.replace(/^www\./, '').replace(/[^\w.-]/g, '_')
+		} catch {
+			return 'unknown-site'
+		}
+	})()
+
+	// Format date as YYYY-MM-DD_hh-mm-ss_Z
+	const now = new Date()
+	const formattedDate = now.toISOString().replace('T', '_').replace(/:/g, '-').replace(/\..+/, '_Z')
+
+	// Save PDF with readable name
+	pdf.save(`seo-report-${domain}-${formattedDate}.pdf`)
+}
+===== src/lib/db.ts =====
+import { MongoClient } from 'mongodb'
+
+if (!process.env.MONGODB_URI) {
+	throw new Error('Please add your MongoDB URI to .env.local')
+}
+
+const uri = process.env.MONGODB_URI
+const options = {}
+
+let client: MongoClient
+let clientPromise: Promise<MongoClient>
+
+declare global {
+	// allow global var in dev mode
+	// eslint-disable-next-line no-var
+	var _mongoClientPromise: Promise<MongoClient> | undefined
+}
+
+if (process.env.NODE_ENV === 'development') {
+	if (!global._mongoClientPromise) {
+		client = new MongoClient(uri, options)
+		global._mongoClientPromise = client.connect()
+	}
+	clientPromise = global._mongoClientPromise
+} else {
+	client = new MongoClient(uri, options)
+	clientPromise = client.connect()
+}
+
+export default clientPromise
+===== src/lib/scraper.ts =====
+import * as cheerio from 'cheerio'
+import { z } from 'zod'
+
+export interface PageMetadata {
+	url: string
+	pageTitle: string | null
+	metaDescription: string | null
+	metaKeywords: string | null
+	h1Tags: string[]
+	imageCount: number
+	hasFavicon: boolean
+	titleLength: number
+	descriptionLength: number
+}
+
+const urlSchema = z.string().url()
+
+export class ScraperError extends Error {
+	constructor(
+		message: string,
+		public statusCode?: number
+	) {
+		super(message)
+		this.name = 'ScraperError'
+	}
+}
+
+export async function scrapeMetadata(url: string): Promise<PageMetadata> {
+	try {
+		urlSchema.parse(url)
+	} catch (error) {
+		throw new ScraperError('Invalid URL format')
+	}
+
+	const fullUrl = url.startsWith('http') ? url : `https://${url}`
+
+	try {
+		const controller = new AbortController()
+		const timeout = setTimeout(() => controller.abort(), 10000)
+
+		const response = await fetch(fullUrl, {
+			signal: controller.signal,
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (compatible; SEO-Report-Generator/1.0)'
+			}
+		})
+
+		clearTimeout(timeout)
+
+		if (!response.ok) {
+			throw new ScraperError(
+				`Failed to fetch URL: ${response.status} ${response.statusText}`,
+				response.status
+			)
+		}
+
+		const html = await response.text()
+		const $ = cheerio.load(html)
+
+		const pageTitle = $('title').first().text().trim() || null
+		const metaDescription = $('meta[name="description"]').attr('content')?.trim() || null
+		const metaKeywords = $('meta[name="keywords"]').attr('content')?.trim() || null
+
+		const h1Tags: string[] = []
+		$('h1').each((_, el) => {
+			const text = $(el).text().trim()
+			if (text) h1Tags.push(text)
+		})
+
+		const imageCount = $('img').length
+		const hasFavicon = $('link[rel*="icon"]').length > 0
+
+		const titleLength = pageTitle?.length || 0
+		const descriptionLength = metaDescription?.length || 0
+
+		return {
+			url: fullUrl,
+			pageTitle,
+			metaDescription,
+			metaKeywords,
+			h1Tags,
+			imageCount,
+			hasFavicon,
+			titleLength,
+			descriptionLength
+		}
+	} catch (error) {
+		if (error instanceof ScraperError) {
+			throw error
+		}
+
+		if (error instanceof Error) {
+			if (error.name === 'AbortError') {
+				throw new ScraperError('Request timeout - the website took too long to respond')
+			}
+			throw new ScraperError(`Failed to scrape URL: ${error.message}`)
+		}
+
+		throw new ScraperError('An unknown error occurred while scraping')
+	}
+}
+
+export function validateMetadata(metadata: PageMetadata): {
+	issues: string[]
+	warnings: string[]
+} {
+	const issues: string[] = []
+	const warnings: string[] = []
+
+	if (!metadata.pageTitle) {
+		issues.push('Missing page title')
+	} else {
+		if (metadata.titleLength < 30) {
+			warnings.push('Title is too short (recommended: 50-60 characters)')
+		} else if (metadata.titleLength > 60) {
+			warnings.push('Title is too long (recommended: 50-60 characters)')
+		}
+	}
+
+	if (!metadata.metaDescription) {
+		issues.push('Missing meta description')
+	} else {
+		if (metadata.descriptionLength < 120) {
+			warnings.push('Meta description is too short (recommended: 150-160 characters)')
+		} else if (metadata.descriptionLength > 160) {
+			warnings.push('Meta description is too long (recommended: 150-160 characters)')
+		}
+	}
+
+	if (metadata.h1Tags.length === 0) {
+		issues.push('No H1 tags found')
+	} else if (metadata.h1Tags.length > 1) {
+		warnings.push(
+			`Multiple H1 tags found (${metadata.h1Tags.length}). Best practice is one H1 per page.`
+		)
+	}
+
+	if (!metadata.hasFavicon) {
+		warnings.push('No favicon detected')
+	}
+
+	return { issues, warnings }
+}
