@@ -5,12 +5,6 @@ It features a modern, responsive UI, an accessible dark/light theme, and integra
 
 ---
 
-## Live Demo
-
-- https://ai-seo-report-generator.vercel.app/
-
----
-
 ## Table of Contents
 
 - [Overview](#overview)
