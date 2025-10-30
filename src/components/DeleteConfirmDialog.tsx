@@ -32,7 +32,7 @@ export default function DeleteConfirmDialog({
 				<Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
 			) : (
 				<Dialog.Trigger asChild>
-					<button className="text-sm font-medium text-red-600 transition hover:text-red-800">
+					<button className="btn-primary">
 						{triggerLabel}
 					</button>
 				</Dialog.Trigger>
@@ -48,13 +48,13 @@ export default function DeleteConfirmDialog({
 
 					<div className="flex justify-end gap-3">
 						<Dialog.Close asChild>
-							<button className="text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md px-4 py-2 transition">
+							<button className='btn-primary'>
 								Cancel
 							</button>
 						</Dialog.Close>
 						<button
 							onClick={handleConfirm}
-							className="rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700"
+							className='btn-danger'
 						>
 							Delete
 						</button>

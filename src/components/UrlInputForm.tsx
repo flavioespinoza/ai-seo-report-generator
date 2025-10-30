@@ -68,7 +68,7 @@ const UrlInputForm = forwardRef<UrlInputFormRef, UrlInputFormProps>(
 							<button
 								type="submit"
 								disabled={loading}
-								className="w-full rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+								className='btn-primary'
 							>
 								{loading ? 'Analyzing...' : 'Analyze SEO'}
 							</button>

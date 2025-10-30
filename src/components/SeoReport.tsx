@@ -26,7 +26,7 @@ export default function SeoReport({
 				<div>
 					<button
 						onClick={onBackToList}
-						className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+						className='btn-outline'
 					>
 						<ArrowLeft size={16} />
 						Back to List
@@ -41,14 +41,14 @@ export default function SeoReport({
 				<div className="flex flex-wrap gap-2">
 					<button
 						onClick={onExportPDF}
-						className="border-gray-300 hover:bg-gray-100 flex items-center gap-1 rounded border px-3 py-2 text-sm font-medium transition"
+						className='btn-danger'
 					>
 						<FileDown size={16} />
 						PDF
 					</button>
 					<button
 						onClick={onExportMarkdown}
-						className="border-gray-300 hover:bg-gray-100 flex items-center gap-1 rounded border px-3 py-2 text-sm font-medium transition"
+						className='btn-primary'
 					>
 						<FileText size={16} />
 						Markdown
