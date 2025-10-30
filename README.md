@@ -75,34 +75,96 @@ Reports are saved in local history and can be exported as **PDF** or **Markdown*
 
 ```
 src/
- ├── app/
- │    ├── page.tsx              # Main page component
- │    └── api/                  # API routes (reports, analyze)
- │
- ├── components/
- │    ├── UrlInputForm.tsx      # Website URL input form
- │    ├── ReportHistory.tsx     # Report history table and filters
- │    ├── SeoReport.tsx         # Detailed SEO report view
- │    ├── AnalyzeLoadingModal.tsx # Radix Dialog modal shown during analysis
- │    ├── DeleteConfirmDialog.tsx # Radix Dialog for report deletion
- │    └── ErrorAlert.tsx        # Error handling UI
- │
- ├── lib/
- │    └── export.ts             # PDF and Markdown export logic
- │
- ├── state/
- │    └── atoms.ts              # Recoil global states
- │
- ├── styles/
- │    └── globals.css           # Base styles, variables, and custom utilities
- │
- ├── types/
- │    └── report.ts             # Type definitions for reports
- │
- └── utils/
-      └── getTagColor.ts        # Tag color mapping logic
+├── app/
+│   ├── api/
+│   │   ├── analyze/
+│   │   │   └── route.ts
+│   │   └── reports/
+│   │       ├── [id]/
+│   │       │   └── route.ts
+│   │       └── route.ts
+│   ├── theme-preview-page/
+│   │   └── page.tsx
+│   ├── favicon.ico
+│   ├── layout.tsx
+│   └── page.tsx
+│
+├── components/
+│   ├── providers/
+│   │   └── RecoilProvider.tsx
+│   ├── AnalyzeLoadingModal.tsx
+│   ├── DeleteConfirmDialog.tsx
+│   ├── ErrorAlert.tsx
+│   ├── ExternalLink.tsx
+│   ├── Icon.tsx
+│   ├── MarkdownWithCode.tsx
+│   ├── ReportHistory.tsx
+│   ├── SeoReport.tsx
+│   └── UrlInputForm.tsx
+│
+├── lib/
+│   ├── db.ts
+│   ├── export.ts
+│   ├── generateTags.ts
+│   ├── openai.ts
+│   └── scraper.ts
+│
+├── state/
+│   └── atoms.ts
+│
+├── styles/
+│   └── globals.css
+│
+├── types/
+│   └── report.ts
+│
+└── utils/
+    └── getTagColor.ts
 ```
 
+## Summary
+
+- **Total Directories:** 13
+- **Total Files:** 26
+
+### Breakdown by Directory:
+
+| Directory | Files | Purpose |
+|-----------|-------|---------|
+| `app/` | 3 | Next.js App Router pages and layouts |
+| `app/api/` | 3 | API route handlers |
+| `components/` | 10 | React components (UI elements) |
+| `lib/` | 5 | Business logic and utilities |
+| `state/` | 1 | Recoil state management |
+| `styles/` | 1 | Global CSS styles |
+| `types/` | 1 | TypeScript type definitions |
+| `utils/` | 1 | Helper utility functions |
+
+### Key Files:
+
+#### API Routes
+- `app/api/analyze/route.ts` - Main endpoint for analyzing URLs
+- `app/api/reports/route.ts` - List all reports
+- `app/api/reports/[id]/route.ts` - Get/delete specific report
+
+#### Core Logic
+- `lib/scraper.ts` - Web scraping with Cheerio
+- `lib/openai.ts` - AI feedback generation
+- `lib/generateTags.ts` - Tag and category generation
+- `lib/db.ts` - MongoDB connection
+- `lib/export.ts` - PDF/Markdown export functionality
+
+#### Components
+- `components/SeoReport.tsx` - Main report display
+- `components/ReportHistory.tsx` - Report list view
+- `components/UrlInputForm.tsx` - URL input form
+- `components/AnalyzeLoadingModal.tsx` - Loading state
+- `components/providers/RecoilProvider.tsx` - State provider
+
+#### Configuration
+- `app/layout.tsx` - Root layout with metadata
+- `styles/globals.css` - Global styles
+- `types/report.ts` - TypeScript interfaces and types
 ---
 
 ## Installation
@@ -111,6 +173,7 @@ src/
 
    ```bash
    git clone https://github.com/your-username/ai-seo-report-generator.git
+   
    cd ai-seo-report-generator
    ```
 
@@ -138,7 +201,7 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 
 ## Environment Variables
 
-Create a `.env.local` file at the root with the following variables:
+Create a `.env` file at the root with the following variables:
 
 ```bash
 # OpenAI API Key
@@ -249,7 +312,7 @@ your-name-2025-10-30_18-22-54_Z.pdf
 
 ---
 
-## Suggested Improvements for AI SEO Report Generator
+## Future Improvements
 
 ### 1. Testing and Stability
 - **Migrate tests to Jest with `ts-jest`** for consistent TypeScript handling.
