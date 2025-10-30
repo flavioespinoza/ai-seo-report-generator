@@ -1,21 +1,20 @@
 import fluid, { extract, fontSize, screens } from 'fluid-tailwind'
 import type { Config } from 'tailwindcss'
-import { fontFamily } from 'tailwindcss/defaultTheme'
-
 // ✅ Explicit imports for Tailwind v3.4.x color sets
 import {
-	gray,
-	zinc,
-	slate,
-	neutral,
-	stone,
 	blue,
 	emerald,
-	red,
-	yellow,
+	gray,
 	green,
-	sky
+	neutral,
+	red,
+	sky,
+	slate,
+	stone,
+	yellow,
+	zinc
 } from 'tailwindcss/colors'
+import { fontFamily } from 'tailwindcss/defaultTheme'
 
 const config: Config = {
 	content: {

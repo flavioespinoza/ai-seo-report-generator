@@ -257,37 +257,37 @@
    🪶 Tooltips (anchored top-right)
    ============================= */
 .tooltip {
-  @apply relative inline-block;
+	@apply relative inline-block;
 }
 
 .tooltip-text {
-  @apply invisible absolute -top-4 right-full rounded-md bg-gray-800 px-2.5 py-1 text-xs text-white opacity-0 transition-all duration-150 whitespace-nowrap translate-y-[-4px];
+	@apply invisible absolute -top-4 right-full translate-y-[-4px] whitespace-nowrap rounded-md bg-gray-800 px-2.5 py-1 text-xs text-white opacity-0 transition-all duration-150;
 }
 
 .tooltip:hover .tooltip-text,
 .tooltip:focus-within .tooltip-text {
-  @apply visible opacity-100 translate-y-0;
+	@apply visible translate-y-0 opacity-100;
 }
 
 .dark .tooltip-text {
-  @apply bg-zinc-700 text-gray-100;
+	@apply bg-zinc-700 text-gray-100;
 }
 
 /* ===========================================
    ✅ Checkbox Styling
    =========================================== */
 input[type='checkbox'] {
-  @apply appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white cursor-pointer transition-colors duration-150 ease-in-out;
+	@apply h-4 w-4 cursor-pointer appearance-none rounded-sm border border-gray-300 bg-white transition-colors duration-150 ease-in-out;
 }
 
 input[type='checkbox']:checked {
-  @apply bg-[var(--primary)] border-[var(--primary)] text-white;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 8.5L6.5 11.5L12.5 4.5' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 80%;
+	@apply border-[var(--primary)] bg-[var(--primary)] text-white;
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 8.5L6.5 11.5L12.5 4.5' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
 }
 
 input[type='checkbox']:focus-visible {
-  @apply outline-none ring-2 ring-[var(--primary)] ring-offset-1;
+	@apply outline-none ring-2 ring-[var(--primary)] ring-offset-1;
 }

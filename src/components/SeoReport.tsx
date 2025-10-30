@@ -21,22 +21,22 @@ export default function SeoReport({
 	if (!report) return null
 
 	return (
-		<div id='seo-report-content' className="w-full rounded-lg bg-white p-6 shadow-md sm:p-8">
+		<div id="seo-report-content" className="w-full rounded-lg bg-white p-6 shadow-md sm:p-8">
 			{/* 🧭 Header Section */}
 			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
-					<button onClick={onBackToList} className="btn-danger text-[11px] py-2">
+					<button onClick={onBackToList} className="btn-danger py-2 text-[11px]">
 						<ArrowLeft size={16} />
 						Back to List
 					</button>
 
-					<h2 className="mt-3 break-words text-2xl font-bold text-gray-900">
+					<h2 className="mt-[30px] break-words text-2xl font-bold text-gray-900">
 						{report.pageTitle || '(Untitled Page)'}
 					</h2>
 					<p className="mt-1 break-all text-sm text-gray-600">{report.url}</p>
 				</div>
 
-				<div className="flex flex-wrap gap-2">
+				<div className="mt-[30px] flex flex-wrap gap-2">
 					<button onClick={onExportPDF} className="btn-danger">
 						<FileDown size={16} />
 						PDF

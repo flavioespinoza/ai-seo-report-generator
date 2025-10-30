@@ -56,27 +56,27 @@
 		</style>
 	</head>
 	<body
-		class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200 antialiased"
+		class="bg-background-light font-display text-gray-800 antialiased dark:bg-background-dark dark:text-gray-200"
 	>
 		<div class="container mx-auto px-4 py-8 sm:px-6 md:py-16 lg:px-8">
 			<header class="mb-10 text-center">
-				<h1 class="text-gray-900 text-4xl font-bold dark:text-white md:text-5xl">
+				<h1 class="text-4xl font-bold text-gray-900 dark:text-white md:text-5xl">
 					SEO Report Generator
 				</h1>
-				<p class="text-gray-600 dark:text-gray-400 mt-3 text-lg">
+				<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
 					AI-powered website analysis to improve your search engine optimization
 				</p>
 			</header>
 			<main>
-				<div class="dark:bg-slate-800 mb-10 rounded-lg bg-white p-6 shadow-md sm:p-8">
+				<div class="mb-10 rounded-lg bg-white p-6 shadow-md dark:bg-slate-800 sm:p-8">
 					<label
-						class="text-gray-700 dark:text-gray-300 mb-2 block text-sm font-medium"
+						class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
 						for="website-url"
 						>Website URL</label
 					>
 					<div class="flex flex-col gap-4 sm:flex-row">
 						<input
-							class="bg-slate-100 dark:bg-slate-700 border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 w-full flex-grow rounded-md focus:border-primary focus:ring-primary"
+							class="w-full flex-grow rounded-md border-gray-300 bg-slate-100 text-gray-900 placeholder-gray-400 focus:border-primary focus:ring-primary dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 dark:placeholder-gray-500"
 							id="website-url"
 							name="website-url"
 							placeholder="https://example.com or example.com"
@@ -88,17 +88,17 @@
 							Analyze SEO
 						</button>
 					</div>
-					<p class="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+					<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
 						Enter any website URL to receive a comprehensive SEO analysis powered by AI
 					</p>
 				</div>
 				<div class="flex flex-col gap-8 lg:flex-row">
 					<aside class="lg:w-1/4 xl:w-1/5">
-						<div class="dark:bg-slate-800 rounded-lg bg-white p-6 shadow-md">
-							<h2 class="text-gray-900 mb-4 text-lg font-semibold dark:text-white">Filters</h2>
+						<div class="rounded-lg bg-white p-6 shadow-md dark:bg-slate-800">
+							<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Filters</h2>
 							<div>
 								<div class="flex cursor-pointer items-center justify-between">
-									<h3 class="text-gray-700 dark:text-gray-300 font-medium">Tags</h3>
+									<h3 class="font-medium text-gray-700 dark:text-gray-300">Tags</h3>
 									<span class="material-symbols-outlined text-gray-500 dark:text-gray-400"
 										>expand_less</span
 									>
@@ -106,72 +106,72 @@
 								<div class="mt-4 space-y-3">
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-optimized"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-optimized"
 											>Optimized</label
 										>
 									</div>
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-improvement"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-improvement"
 											>Needs Improvement</label
 										>
 									</div>
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 text-critical focus:ring-critical bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-critical focus:ring-critical dark:border-gray-600 dark:bg-gray-700"
 											id="tag-critical"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-critical"
 											>Critical Issues</label
 										>
 									</div>
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-newly"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-newly"
 											>Newly Analyzed</label
 										>
 									</div>
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-meta"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-meta"
 											>Missing Meta Description</label
 										>
 									</div>
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-title"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-title"
 											>Missing Title Tag</label
 										>
@@ -179,58 +179,58 @@
 									<div class="flex items-center">
 										<input
 											checked=""
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-h1"
 											type="checkbox"
 										/>
-										<label class="text-gray-600 dark:text-gray-400 ml-2 block text-sm" for="tag-h1"
+										<label class="ml-2 block text-sm text-gray-600 dark:text-gray-400" for="tag-h1"
 											>No H1 Tag</label
 										>
 									</div>
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-multi-h1"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-multi-h1"
 											>Multiple H1 Tags</label
 										>
 									</div>
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-favicon"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-favicon"
 											>No Favicon</label
 										>
 									</div>
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-images"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-images"
 											>No Images</label
 										>
 									</div>
 									<div class="flex items-center">
 										<input
-											class="border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 h-4 w-4 rounded text-primary focus:ring-primary"
+											class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
 											id="tag-title-short"
 											type="checkbox"
 										/>
 										<label
-											class="text-gray-600 dark:text-gray-400 ml-2 block text-sm"
+											class="ml-2 block text-sm text-gray-600 dark:text-gray-400"
 											for="tag-title-short"
 											>Title Too Short</label
 										>
@@ -242,20 +242,20 @@
 					<section class="lg:w-3/4 xl:w-4/5">
 						<div class="relative mb-4">
 							<span
-								class="material-symbols-outlined text-gray-400 dark:text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"
+								class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
 								>search</span
 							>
 							<input
-								class="dark:bg-slate-800 border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 w-full rounded-md border bg-white py-2 pl-10 pr-4 focus:border-primary focus:ring-primary"
+								class="w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-4 text-gray-900 placeholder-gray-400 focus:border-primary focus:ring-primary dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-gray-500"
 								placeholder="Search reports..."
 								type="search"
 							/>
 						</div>
-						<div class="dark:bg-slate-800 overflow-hidden rounded-lg bg-white shadow-md">
+						<div class="overflow-hidden rounded-lg bg-white shadow-md dark:bg-slate-800">
 							<div class="overflow-x-auto">
 								<table class="w-full text-left text-sm">
 									<thead
-										class="bg-slate-50 dark:bg-slate-700/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider"
+										class="bg-slate-50 text-xs uppercase tracking-wider text-gray-500 dark:bg-slate-700/50 dark:text-gray-400"
 									>
 										<tr>
 											<th class="px-6 py-3" scope="col">Report</th>
@@ -272,7 +272,7 @@
 									</thead>
 									<tbody>
 										<tr
-											class="border-gray-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/30 border-b transition-colors"
+											class="border-b border-gray-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/30"
 										>
 											<td class="px-6 py-4">
 												<div class="font-medium text-primary hover:underline">
@@ -282,27 +282,27 @@
 													UI Design Made Easy, Powered By AI | Uizard
 												</div>
 											</td>
-											<td class="text-gray-600 dark:text-gray-300 whitespace-nowrap px-6 py-4">
+											<td class="whitespace-nowrap px-6 py-4 text-gray-600 dark:text-gray-300">
 												10/30/2025
 											</td>
 											<td class="px-6 py-4">
 												<div
-													class="text-gray-500 dark:text-gray-400 flex items-center justify-end gap-3"
+													class="flex items-center justify-end gap-3 text-gray-500 dark:text-gray-400"
 												>
 													<button class="hover:text-critical">
-														<span class="material-symbols-outlined text-critical text-xl"
+														<span class="material-symbols-outlined text-xl text-critical"
 															>delete</span
 														>
 													</button>
 													<button class="hover:text-primary">
 														<span
-															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															class="material-symbols-outlined text-xl text-gray-700 dark:text-gray-300"
 															>download</span
 														>
 													</button>
 													<button class="hover:text-primary">
 														<span
-															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															class="material-symbols-outlined text-xl text-gray-700 dark:text-gray-300"
 															>content_copy</span
 														>
 													</button>
@@ -315,7 +315,7 @@
 											</td>
 										</tr>
 										<tr
-											class="border-gray-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/30 border-b transition-colors"
+											class="border-b border-gray-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/30"
 										>
 											<td class="px-6 py-4">
 												<div class="font-medium text-primary hover:underline">
@@ -325,27 +325,27 @@
 													Flavio Espinoza | Portfolio
 												</div>
 											</td>
-											<td class="text-gray-600 dark:text-gray-300 whitespace-nowrap px-6 py-4">
+											<td class="whitespace-nowrap px-6 py-4 text-gray-600 dark:text-gray-300">
 												10/30/2025
 											</td>
 											<td class="px-6 py-4">
 												<div
-													class="text-gray-500 dark:text-gray-400 flex items-center justify-end gap-3"
+													class="flex items-center justify-end gap-3 text-gray-500 dark:text-gray-400"
 												>
 													<button class="hover:text-critical">
-														<span class="material-symbols-outlined text-critical text-xl"
+														<span class="material-symbols-outlined text-xl text-critical"
 															>delete</span
 														>
 													</button>
 													<button class="hover:text-primary">
 														<span
-															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															class="material-symbols-outlined text-xl text-gray-700 dark:text-gray-300"
 															>download</span
 														>
 													</button>
 													<button class="hover:text-primary">
 														<span
-															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															class="material-symbols-outlined text-xl text-gray-700 dark:text-gray-300"
 															>content_copy</span
 														>
 													</button>
@@ -357,7 +357,7 @@
 												</div>
 											</td>
 										</tr>
-										<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+										<tr class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30">
 											<td class="px-6 py-4">
 												<div class="font-medium text-primary hover:underline">
 													https://amazon.com
@@ -366,27 +366,27 @@
 													Amazon.com. Spend less. Smile more.
 												</div>
 											</td>
-											<td class="text-gray-600 dark:text-gray-300 whitespace-nowrap px-6 py-4">
+											<td class="whitespace-nowrap px-6 py-4 text-gray-600 dark:text-gray-300">
 												10/30/2025
 											</td>
 											<td class="px-6 py-4">
 												<div
-													class="text-gray-500 dark:text-gray-400 flex items-center justify-end gap-3"
+													class="flex items-center justify-end gap-3 text-gray-500 dark:text-gray-400"
 												>
 													<button class="hover:text-critical">
-														<span class="material-symbols-outlined text-critical text-xl"
+														<span class="material-symbols-outlined text-xl text-critical"
 															>delete</span
 														>
 													</button>
 													<button class="hover:text-primary">
 														<span
-															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															class="material-symbols-outlined text-xl text-gray-700 dark:text-gray-300"
 															>download</span
 														>
 													</button>
 													<button class="hover:text-primary">
 														<span
-															class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-xl"
+															class="material-symbols-outlined text-xl text-gray-700 dark:text-gray-300"
 															>content_copy</span
 														>
 													</button>
@@ -406,7 +406,7 @@
 				</div>
 			</main>
 			<footer class="mt-16 text-center">
-				<p class="text-gray-500 dark:text-gray-400 text-sm">
+				<p class="text-sm text-gray-500 dark:text-gray-400">
 					Built with Next.js, TypeScript, and OpenAI
 				</p>
 			</footer>

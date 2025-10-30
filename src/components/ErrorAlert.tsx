@@ -29,7 +29,7 @@ export default function ErrorAlert({ message, onDismiss }: ErrorAlertProps) {
 								<AlertCircle className="h-6 w-6 flex-shrink-0 text-red-600" />
 								<Dialog.Title className="text-lg font-semibold text-red-600">Error</Dialog.Title>
 							</div>
-							<Dialog.Close className="text-gray-400 flex-shrink-0 transition hover:text-red-600">
+							<Dialog.Close className="flex-shrink-0 text-gray-400 transition hover:text-red-600">
 								<X className="h-5 w-5 text-red-600" />
 							</Dialog.Close>
 						</div>
