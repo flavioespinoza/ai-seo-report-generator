@@ -3,6 +3,7 @@
 import { Report } from '@/types/report'
 import { getTagColor } from '@/utils/getTagColor'
 import { ArrowLeft, FileDown, FileText } from 'lucide-react'
+import MarkdownWithCode from './MarkdownWithCode'
 
 interface SeoReportProps {
 	report: Report
@@ -24,32 +25,23 @@ export default function SeoReport({
 			{/* 🧭 Header Section */}
 			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
-					<button
-						onClick={onBackToList}
-						className='btn-outline'
-					>
+					<button onClick={onBackToList} className="btn-danger text-[8px] py-2">
 						<ArrowLeft size={16} />
 						Back to List
 					</button>
 
-					<h2 className="text-gray-900 mt-3 break-words text-2xl font-bold">
+					<h2 className="mt-3 break-words text-2xl font-bold text-gray-900">
 						{report.pageTitle || '(Untitled Page)'}
 					</h2>
-					<p className="text-gray-600 mt-1 break-all text-sm">{report.url}</p>
+					<p className="mt-1 break-all text-sm text-gray-600">{report.url}</p>
 				</div>
 
 				<div className="flex flex-wrap gap-2">
-					<button
-						onClick={onExportPDF}
-						className='btn-danger'
-					>
+					<button onClick={onExportPDF} className="btn-danger">
 						<FileDown size={16} />
 						PDF
 					</button>
-					<button
-						onClick={onExportMarkdown}
-						className='btn-primary'
-					>
+					<button onClick={onExportMarkdown} className="btn-primary">
 						<FileText size={16} />
 						Markdown
 					</button>
@@ -83,8 +75,8 @@ export default function SeoReport({
 
 			{/* 📊 Metadata Section */}
 			<section className="mb-8">
-				<h3 className="text-gray-900 mb-3 text-lg font-semibold">Metadata Overview</h3>
-				<div className="text-gray-700 space-y-2 text-sm">
+				<h3 className="mb-3 text-lg font-semibold text-gray-900">Metadata Overview</h3>
+				<div className="space-y-2 text-sm text-gray-700">
 					<p>
 						<strong>Title:</strong> {report.metadata?.pageTitle || 'N/A'}
 					</p>
@@ -108,11 +100,11 @@ export default function SeoReport({
 
 			{/* 🤖 AI Feedback */}
 			<section>
-				<h3 className="text-gray-900 mb-3 text-lg font-semibold">AI Feedback</h3>
-				<div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
-					{typeof report.aiFeedback === 'string'
-						? report.aiFeedback
-						: JSON.stringify(report.aiFeedback, null, 2)}
+				<h3 className="mb-3 text-lg font-semibold text-gray-900">AI Feedback</h3>
+				<div>
+					{typeof report.aiFeedback === 'string' && (
+						<MarkdownWithCode markdown={report.aiFeedback} />
+					)}
 				</div>
 			</section>
 		</div>

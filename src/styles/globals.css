@@ -243,3 +243,21 @@
 		animation: fade-in 0.3s ease-in-out;
 	}
 }
+
+
+/* markdown parent div */
+.markdown-parent-element > * {
+	display: block !important;
+	margin-bottom: 20px !important;
+}
+
+/* for lists */
+.markdown-parent-element > ol > li {
+	display: block !important;
+	margin-bottom: 20px !important;
+}
+
+.markdown-parent-element > ul > li {
+	display: block !important;
+	margin-bottom: 20px !important;
+}

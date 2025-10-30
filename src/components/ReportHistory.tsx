@@ -322,7 +322,7 @@ export default function ReportHistory({
 
                         {/* ⚙️ Actions Column */}
                         <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end gap-2 flex-wrap">
+                          <div className="flex justify-end gap-2 flex-wrap mt-">
                             <DeleteConfirmDialog
                               onConfirm={() =>
                                 onDeleteReport(id)
