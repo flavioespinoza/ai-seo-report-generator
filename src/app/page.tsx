@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useSetRecoilState } from 'recoil'
+import { reportHistoryState, reportTagsState } from '@/state/atoms'
 import ErrorAlert from '@/components/ErrorAlert'
 import ReportHistory from '@/components/ReportHistory'
 import SeoReport from '@/components/SeoReport'
 import UrlInputForm, { UrlInputFormRef } from '@/components/UrlInputForm'
 import { exportToPDF, generateMarkdown } from '@/lib/export'
-import { reportHistoryState, reportTagsState } from '@/state/atoms'
 import type { Report, ReportSummary } from '@/types/report'
-import { useSetRecoilState } from 'recoil'
 
 export default function Home() {
 	const [loading, setLoading] = useState(false)
@@ -17,7 +17,6 @@ export default function Home() {
 	const [historyLoading, setHistoryLoading] = useState(true)
 	const urlInputRef = useRef<UrlInputFormRef>(null)
 
-	// ✅ Recoil setters
 	const setReportHistory = useSetRecoilState(reportHistoryState)
 	const setReportTags = useSetRecoilState(reportTagsState)
 
@@ -31,13 +30,11 @@ export default function Home() {
 			const response = await fetch('/api/reports')
 			if (!response.ok) throw new Error('Failed to load reports')
 			const data = await response.json()
-
 			if (data.success && Array.isArray(data.reports)) {
 				setReportHistory(data.reports)
 				setReportTags(extractTags(data.reports))
 			}
-		} catch (err) {
-			console.error('Error loading reports:', err)
+		} catch {
 			setError('Failed to load reports')
 		} finally {
 			setHistoryLoading(false)
@@ -95,12 +92,9 @@ export default function Home() {
 		try {
 			const response = await fetch(`/api/reports/${id}`, { method: 'DELETE' })
 			const data = await response.json()
-
 			if (data.success) {
 				await loadReports()
-				if (currentReport && currentReport._id === id) {
-					setCurrentReport(null)
-				}
+				if (currentReport && currentReport._id === id) setCurrentReport(null)
 			} else setError(data.error || 'Failed to delete report')
 		} catch {
 			setError('Failed to delete report')
@@ -115,9 +109,7 @@ export default function Home() {
 				const data = await response.json()
 				if (data.success && data.report) reportToExport = data.report
 			}
-			if (reportToExport) {
-				await exportToPDF('seo-report-content', reportToExport.url)
-			}
+			if (reportToExport) await exportToPDF('seo-report-content', reportToExport.url)
 		} catch {
 			setError('Failed to export PDF')
 		}
@@ -177,17 +169,17 @@ export default function Home() {
 	}
 
 	return (
-		<div className="bg-gray-100 flex min-h-screen flex-col">
-			<header className="bg-gray-100 py-8 text-center md:py-12">
-				<h1 className="mb-3 text-3xl font-bold md:mb-4 md:text-4xl lg:text-5xl">
+		<div className="min-h-screen bg-gray-100 flex flex-col">
+			<header className="text-center py-8 md:py-12">
+				<h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">
 					SEO Report Generator
 				</h1>
-				<p className="text-gray-700 text-base md:text-lg">
+				<p className="text-base md:text-lg text-gray-700">
 					AI-powered website analysis to improve your search engine optimization
 				</p>
 			</header>
 
-			<main className="mx-auto w-full max-w-[1400px] flex-1 space-y-8 px-4 pb-12 sm:px-6 lg:px-8">
+			<main className="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-8">
 				<div className="mt-4">
 					<UrlInputForm ref={urlInputRef} onAnalyze={handleAnalyze} loading={loading} />
 				</div>
@@ -198,43 +190,42 @@ export default function Home() {
 					</div>
 				)}
 
-				<div className="space-y-8">
-					{currentReport ? (
-						<div className="flex flex-col gap-6 lg:flex-row">
-							<aside className="w-full flex-shrink-0 lg:w-80">
-								<ReportHistory
-									onViewReport={handleViewReport}
-									onDeleteReport={handleDeleteReport}
-									onExportPDF={handleExportPDF}
-									onExportMarkdown={handleExportMarkdown}
-									loading={historyLoading}
-									isReportView={true}
-									currentReportId={currentReport._id}
-								/>
-							</aside>
-							<div className="min-w-0 flex-1">
-								<SeoReport
-									report={currentReport}
-									onExportPDF={() => handleExportPDF()}
-									onExportMarkdown={() => handleExportMarkdown()}
-									onBackToList={handleBackToList}
-								/>
-							</div>
+				{/* ✅ Only render one of these at a time */}
+				{currentReport ? (
+					<div className="flex flex-col lg:flex-row gap-8">
+						<aside className="w-full lg:w-80 flex-shrink-0">
+							<ReportHistory
+								onViewReport={handleViewReport}
+								onDeleteReport={handleDeleteReport}
+								onExportPDF={handleExportPDF}
+								onExportMarkdown={handleExportMarkdown}
+								loading={historyLoading}
+								isReportView={true}
+								currentReportId={currentReport._id}
+							/>
+						</aside>
+						<div className="flex-1 min-w-0">
+							<SeoReport
+								report={currentReport}
+								onExportPDF={() => handleExportPDF()}
+								onExportMarkdown={() => handleExportMarkdown()}
+								onBackToList={handleBackToList}
+							/>
 						</div>
-					) : (
-						<ReportHistory
-							onViewReport={handleViewReport}
-							onDeleteReport={handleDeleteReport}
-							onExportPDF={handleExportPDF}
-							onExportMarkdown={handleExportMarkdown}
-							loading={historyLoading}
-							isReportView={false}
-						/>
-					)}
-				</div>
+					</div>
+				) : (
+					<ReportHistory
+						onViewReport={handleViewReport}
+						onDeleteReport={handleDeleteReport}
+						onExportPDF={handleExportPDF}
+						onExportMarkdown={handleExportMarkdown}
+						loading={historyLoading}
+						isReportView={false}
+					/>
+				)}
 			</main>
 
-			<footer className="text-gray-600 border-gray-200 mt-auto border-t py-10 text-center text-sm">
+			<footer className="text-center py-10 text-sm text-gray-600 border-t border-gray-200 mt-auto">
 				Built with Next.js, TypeScript, and OpenAI
 			</footer>
 		</div>

@@ -91,7 +91,7 @@ export default function ReportHistory({
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
+		<div className="w-full">
 			<div className={`flex ${isReportView ? 'flex-col' : 'flex-col md:flex-row'} gap-6`}>
 				{/* Sidebar Filters */}
 				{!isReportView && (

@@ -1,0 +1,40 @@
+src
+├── app
+│   ├── api
+│   │   ├── analyze
+│   │   │   └── route.ts
+│   │   └── reports
+│   │       ├── [id]
+│   │       │   └── route.ts
+│   │       └── route.ts
+│   ├── favicon.ico
+│   ├── layout.tsx
+│   └── page.tsx
+├── components
+│   ├── DeleteConfirmDialog.tsx
+│   ├── ErrorAlert.tsx
+│   ├── ExportButtons.tsx
+│   ├── ExternalLink.tsx
+│   ├── Icon.tsx
+│   ├── MarkdownWithCode.tsx
+│   ├── providers
+│   │   └── RecoilProvider.tsx
+│   ├── ReportHistory.tsx
+│   ├── SeoReport.tsx
+│   └── UrlInputForm.tsx
+├── lib
+│   ├── db.ts
+│   ├── export.ts
+│   ├── generateTags.ts
+│   ├── openai.ts
+│   └── scraper.ts
+├── state
+│   └── atoms.ts
+├── styles
+│   └── globals.css
+├── types
+│   └── report.ts
+└── utils
+    └── getTagColor.ts
+
+12 directories, 25 files
