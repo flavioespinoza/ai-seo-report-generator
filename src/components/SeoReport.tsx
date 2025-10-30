@@ -30,13 +30,13 @@ export default function SeoReport({
 						Back to List
 					</button>
 
-					<h2 className="mt-3 break-words text-2xl font-bold text-gray-900">
+					<h2 className="mt-[30px] break-words text-2xl font-bold text-gray-900">
 						{report.pageTitle || '(Untitled Page)'}
 					</h2>
 					<p className="mt-1 break-all text-sm text-gray-600">{report.url}</p>
 				</div>
 
-				<div className="flex flex-wrap gap-2">
+				<div className="flex flex-wrap gap-2 mt-[30px]">
 					<button onClick={onExportPDF} className="btn-danger">
 						<FileDown size={16} />
 						PDF
