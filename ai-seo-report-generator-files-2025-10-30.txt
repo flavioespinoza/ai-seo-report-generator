@@ -1,0 +1,1375 @@
+===== src/types/report.ts =====
+export interface Metadata {
+	pageTitle: string | null
+	metaDescription: string | null
+	metaKeywords: string | null
+	h1Tags: string[]
+	imageCount: number
+	hasFavicon: boolean
+	titleLength?: number
+	descriptionLength?: number
+}
+
+export interface Report {
+	_id?: string
+	id?: string | number
+	url: string
+	metadata: Metadata
+	aiFeedback: string
+	createdAt?: string | Date // <-- FIXED: allow both string and Date
+	hasIssues?: boolean
+}
+
+export interface ReportSummary {
+	_id?: string
+	id?: string | number
+	url: string
+	pageTitle: string | null
+	metaDescription: string | null
+	createdAt: string
+	hasIssues: boolean
+}
+===== src/app/layout.tsx =====
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import '@/styles/globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+	title: 'SEO Report Generator - AI-Powered Website Analysis',
+	description: 'Generate comprehensive SEO reports for any website using AI-powered analysis'
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+	return (
+		<html lang="en">
+			<body className={inter.className}>{children}</body>
+		</html>
+	)
+}
+===== src/app/api/analyze/route.ts =====
+import { NextRequest, NextResponse } from 'next/server'
+import clientPromise from '@/lib/db'
+import { generateSeoFeedback } from '@/lib/openai'
+import { ScraperError, scrapeMetadata } from '@/lib/scraper'
+import type { Report } from '@/types/report'
+import { z } from 'zod'
+
+const analyzeSchema = z.object({
+	url: z.string().url('Please provide a valid URL')
+})
+
+export async function POST(request: NextRequest) {
+	try {
+		const body = await request.json()
+
+		const validation = analyzeSchema.safeParse(body)
+		if (!validation.success) {
+			return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 })
+		}
+
+		const { url } = validation.data
+
+		// Scrape metadata
+		let metadata
+		try {
+			metadata = await scrapeMetadata(url)
+		} catch (error) {
+			if (error instanceof ScraperError) {
+				return NextResponse.json({ error: error.message }, { status: error.statusCode || 400 })
+			}
+			throw error
+		}
+
+		// Generate AI feedback
+		const aiFeedback = await generateSeoFeedback(metadata)
+
+		// Save report to MongoDB
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<Report>('reports')
+
+		const newReport: Report = {
+			url: metadata.url,
+			metadata: {
+				pageTitle: metadata.pageTitle,
+				metaDescription: metadata.metaDescription,
+				metaKeywords: metadata.metaKeywords,
+				h1Tags: metadata.h1Tags,
+				imageCount: metadata.imageCount,
+				hasFavicon: metadata.hasFavicon,
+				titleLength: metadata.titleLength,
+				descriptionLength: metadata.descriptionLength
+			},
+			aiFeedback,
+			createdAt: new Date(),
+			hasIssues: metadata.imageCount === 0 || !metadata.hasFavicon
+		}
+
+		const result = await collection.insertOne(newReport)
+		const insertedId = result.insertedId.toString()
+
+		// Return the full report
+		return NextResponse.json({
+			success: true,
+			report: {
+				_id: insertedId,
+				...newReport
+			}
+		})
+	} catch (error) {
+		console.error('Analysis error:', error)
+		return NextResponse.json(
+			{
+				error:
+					error instanceof Error ? error.message : 'Failed to analyze website. Please try again.'
+			},
+			{ status: 500 }
+		)
+	}
+}
+===== src/app/api/reports/route.ts =====
+import { NextResponse } from 'next/server'
+import clientPromise from '@/lib/db'
+import type { Report } from '@/types/report'
+
+export async function GET() {
+	try {
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<Report>('reports')
+
+		const reports = await collection.find({}).sort({ createdAt: -1 }).toArray()
+
+		return NextResponse.json({
+			success: true,
+			reports: reports.map((report) => ({
+				id: report.id || null,
+				_id: report._id ? report._id.toString() : null,
+				url: report.url,
+				pageTitle: report.metadata?.pageTitle || null,
+				metaDescription: report.metadata?.metaDescription || null,
+				createdAt:
+					typeof report.createdAt === 'string'
+						? report.createdAt
+						: (report.createdAt?.toISOString() ?? null),
+				hasIssues: !!report.hasIssues
+			}))
+		})
+	} catch (error) {
+		console.error('Error in GET /api/reports:', error)
+		return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
+	}
+}
+
+export async function POST(request: Request) {
+	try {
+		const body = await request.json()
+		const { report }: { report: Report } = body
+
+		if (!report || !report.url) {
+			return NextResponse.json({ success: false, error: 'Missing report data.' }, { status: 400 })
+		}
+
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<Report>('reports')
+
+		const newReport: Report = {
+			...report,
+			createdAt: new Date() // fine now: Report allows Date
+		}
+
+		const result = await collection.insertOne(newReport)
+
+		return NextResponse.json({
+			success: true,
+			report: { ...newReport, _id: result.insertedId.toString() }
+		})
+	} catch (error) {
+		console.error('Error in POST /api/reports:', error)
+		return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
+	}
+}
+===== src/app/api/reports/[id]/route.ts =====
+import { NextResponse } from 'next/server'
+import clientPromise from '@/lib/db'
+import type { Report } from '@/types/report'
+import { ObjectId } from 'mongodb'
+
+// Extend Report to support ObjectId on the backend
+interface DbReport extends Omit<Report, '_id'> {
+	_id?: string | ObjectId
+}
+
+export async function GET(request: Request, { params }: { params: { id: string } }) {
+	try {
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<DbReport>('reports')
+
+		let query: { _id: ObjectId }
+		try {
+			query = { _id: new ObjectId(params.id) }
+		} catch {
+			return NextResponse.json({ success: false, error: 'Invalid report ID.' }, { status: 400 })
+		}
+
+		const report = await collection.findOne(query)
+		if (!report) {
+			return NextResponse.json({ success: false, error: 'Report not found.' }, { status: 404 })
+		}
+
+		return NextResponse.json({
+			success: true,
+			report: { ...report, _id: report._id?.toString() }
+		})
+	} catch (error) {
+		console.error('Error in GET /api/reports/[id]:', error)
+		return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
+	}
+}
+
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+	try {
+		const client = await clientPromise
+		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
+		const collection = db.collection<DbReport>('reports')
+
+		let query: { _id: ObjectId }
+		try {
+			query = { _id: new ObjectId(params.id) }
+		} catch {
+			return NextResponse.json({ success: false, error: 'Invalid report ID.' }, { status: 400 })
+		}
+
+		const result = await collection.deleteOne(query)
+		if (result.deletedCount === 0) {
+			return NextResponse.json({ success: false, error: 'Report not found.' }, { status: 404 })
+		}
+
+		return NextResponse.json({ success: true })
+	} catch (error) {
+		console.error('Error in DELETE /api/reports/[id]:', error)
+		return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 })
+	}
+}
+===== src/app/page.tsx =====
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import ErrorAlert from '@/components/ErrorAlert'
+import ExportButtons from '@/components/ExportButtons'
+import ReportHistory from '@/components/ReportHistory'
+import SeoReport from '@/components/SeoReport'
+import UrlInputForm, { UrlInputFormRef } from '@/components/UrlInputForm'
+import { exportToPDF, generateMarkdown } from '@/lib/export'
+import type { Report, ReportSummary } from '@/types/report'
+
+export default function Home() {
+	const [loading, setLoading] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+	const [currentReport, setCurrentReport] = useState<Report | null>(null)
+	const [reportHistory, setReportHistory] = useState<ReportSummary[]>([])
+	const [historyLoading, setHistoryLoading] = useState(true)
+	const urlInputRef = useRef<UrlInputFormRef>(null)
+
+	useEffect(() => {
+		const loadReports = async () => {
+			try {
+				setHistoryLoading(true)
+				const response = await fetch('/api/reports')
+				if (!response.ok) {
+					console.error('Failed to load reports: HTTP', response.status)
+					return
+				}
+				const data = await response.json()
+				if (data.success && Array.isArray(data.reports)) {
+					setReportHistory(data.reports)
+				} else {
+					console.error('Unexpected response format:', data)
+				}
+			} catch (err) {
+				console.error('Error fetching report history:', err)
+			} finally {
+				setHistoryLoading(false)
+			}
+		}
+
+		loadReports()
+	}, [])
+
+	const handleAnalyze = async (url: string) => {
+		setLoading(true)
+		setError(null)
+		setCurrentReport(null)
+		try {
+			const response = await fetch('/api/analyze', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ url })
+			})
+			const data = await response.json()
+			if (!response.ok) throw new Error(data.error || 'Failed to analyze website')
+			if (data.success && data.report) {
+				setCurrentReport(data.report)
+				// Refresh history after new report is created
+				const res = await fetch('/api/reports')
+				const refreshed = await res.json()
+				if (refreshed.success) setReportHistory(refreshed.reports)
+			}
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'An unexpected error occurred')
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	const handleSelectReport = async (id: string | number) => {
+		try {
+			const response = await fetch(`/api/reports/${id}`)
+			const data = await response.json()
+			if (data.success && data.report) {
+				setCurrentReport(data.report)
+				setError(null)
+			}
+		} catch {
+			setError('Failed to load report')
+		}
+	}
+
+	const handleDeleteReport = async (id: string | number) => {
+		try {
+			const response = await fetch(`/api/reports/${id}`, { method: 'DELETE' })
+			if (response.ok) {
+				if (currentReport?._id === id || currentReport?.id === id) {
+					setCurrentReport(null)
+				}
+				const updated = await fetch('/api/reports')
+				const data = await updated.json()
+				if (data.success) setReportHistory(data.reports)
+			}
+		} catch {
+			setError('Failed to delete report')
+		}
+	}
+
+	const handleExportMarkdown = () => {
+		if (!currentReport) return
+
+		const domain = (() => {
+			try {
+				const parsed = new URL(currentReport.url)
+				return parsed.hostname.replace(/^www\./, '').replace(/[^\w.-]/g, '_')
+			} catch {
+				return 'unknown-site'
+			}
+		})()
+
+		const now = new Date()
+		const formattedDate = now
+			.toISOString()
+			.replace('T', '_')
+			.replace(/:/g, '-')
+			.replace(/\..+/, '_Z')
+
+		const markdown = generateMarkdown(currentReport)
+		const blob = new Blob([markdown], { type: 'text/markdown' })
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		a.href = url
+		a.download = `seo-report-${domain}-${formattedDate}.md`
+		a.click()
+		URL.revokeObjectURL(url)
+	}
+
+	const handleExportPDF = async () => {
+		await exportToPDF('seo-report-container', currentReport?.url)
+	}
+
+	const handleNewSearch = () => {
+		setCurrentReport(null)
+		setError(null)
+		urlInputRef.current?.clearInput()
+		window.scrollTo({ top: 0, behavior: 'smooth' })
+		setTimeout(() => {
+			urlInputRef.current?.focusInput()
+		}, 300)
+	}
+
+	return (
+		<main className="min-h-screen px-4 py-12 sm:px-6 lg:px-8">
+			<div className="mx-auto max-w-3xl">
+				<div className="mb-12 text-center">
+					<h1 className="text-gray-900 mb-3 text-4xl font-bold">SEO Report Generator</h1>
+					<p className="text-gray-600 text-lg">
+						AI-powered website analysis to improve your search engine optimization
+					</p>
+				</div>
+
+				{/* Always visible input form */}
+				<div className="mb-8">
+					<UrlInputForm ref={urlInputRef} onAnalyze={handleAnalyze} loading={loading} />
+				</div>
+
+				{/* Error alert if any */}
+				{error && (
+					<div className="mb-8">
+						<ErrorAlert message={error} onDismiss={() => setError(null)} />
+					</div>
+				)}
+
+				{/* Current report display */}
+				{currentReport && (
+					<>
+						<ExportButtons
+							onExportMarkdown={handleExportMarkdown}
+							onExportPDF={handleExportPDF}
+							onNewSearch={handleNewSearch}
+							className="mb-4"
+						/>
+						<SeoReport report={currentReport} />
+						<ExportButtons
+							onExportMarkdown={handleExportMarkdown}
+							onExportPDF={handleExportPDF}
+							onNewSearch={handleNewSearch}
+							className="mt-6"
+						/>
+					</>
+				)}
+
+				{/* Report History */}
+				<div className="mx-auto max-w-3xl">
+					<ReportHistory
+						reports={reportHistory}
+						onSelectReport={handleSelectReport}
+						onDeleteReport={handleDeleteReport}
+						loading={historyLoading}
+						activeReportId={currentReport?._id || currentReport?.id || null}
+					/>
+				</div>
+
+				<footer className="text-gray-500 mt-16 text-center text-sm">
+					<p>Built with Next.js, TypeScript, and OpenAI</p>
+				</footer>
+			</div>
+		</main>
+	)
+}
+===== src/components/ReportHistory.tsx =====
+'use client'
+
+import React from 'react'
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
+import type { ReportSummary } from '@/types/report'
+
+interface ReportHistoryProps {
+	reports: ReportSummary[]
+	onSelectReport: (id: string | number) => Promise<void> | void
+	onDeleteReport: (id: string | number) => Promise<void> | void
+	loading?: boolean
+	activeReportId?: string | number | null
+}
+
+export default function ReportHistory({
+	reports,
+	onSelectReport,
+	onDeleteReport,
+	loading = false,
+	activeReportId
+}: ReportHistoryProps) {
+	if (loading) {
+		return (
+			<div className="text-gray-500 rounded-xl bg-white p-4 text-center shadow-lg">
+				Loading report history...
+			</div>
+		)
+	}
+
+	if (!reports || reports.length === 0) {
+		return <div className="text-gray-500 rounded-xl p-4 text-center">No reports found.</div>
+	}
+
+	const handleViewReport = async (id: string | number) => {
+		await onSelectReport(id)
+		window.scrollTo({ top: 0, behavior: 'smooth' })
+	}
+
+	return (
+		<div className="divide-y divide-[#bdbdbd] rounded-xl bg-white shadow-lg">
+			{reports.map((report) => {
+				const id = report._id || report.id!
+				const isActive = activeReportId === id
+
+				return (
+					<div
+						key={id}
+						className={`flex flex-col justify-between gap-3 p-4 transition sm:flex-row sm:items-center sm:gap-4 ${
+							isActive ? 'border-l-4 border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+						}`}
+					>
+						<div className="min-w-0 flex-1">
+							<a
+								href={report.url.startsWith('http') ? report.url : `https://${report.url}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="block truncate text-sm font-medium text-blue-600 hover:underline"
+							>
+								{report.url}
+							</a>
+							{report.pageTitle && (
+								<p className="text-gray-600 truncate text-xs">{report.pageTitle}</p>
+							)}
+							<p className="text-gray-400 mt-1 text-xs">
+								{new Date(report.createdAt).toLocaleString()}
+							</p>
+							{report._id && (
+								<p className="text-gray-400 mt-1 font-mono text-xs">ID: {report._id}</p>
+							)}
+						</div>
+
+						<div className="flex flex-shrink-0 items-center gap-3">
+							<button
+								onClick={() => handleViewReport(id)}
+								className="rounded bg-blue-500 px-4 py-1.5 text-sm text-white transition hover:bg-blue-600"
+							>
+								View Report
+							</button>
+
+							<DeleteConfirmDialog onConfirm={() => onDeleteReport(id)} triggerLabel="Delete" />
+						</div>
+					</div>
+				)
+			})}
+		</div>
+	)
+}
+===== src/components/ExportButtons.tsx =====
+// src/components/ExportButtons.tsx
+import React from 'react'
+
+interface ExportButtonsProps {
+	onExportMarkdown: () => void
+	onExportPDF: () => void
+	onNewSearch: () => void
+	className?: string
+}
+
+export default function ExportButtons({
+	onExportMarkdown,
+	onExportPDF,
+	onNewSearch,
+	className = ''
+}: ExportButtonsProps) {
+	return (
+		<div className={`mb-8 flex flex-wrap items-center justify-between gap-3 ${className}`}>
+			<div className="flex items-center gap-3">
+				<button
+					onClick={onExportMarkdown}
+					className="rounded-lg bg-blue-400 px-4 py-2 text-white transition hover:bg-blue-700"
+				>
+					Export as Markdown
+				</button>
+				<button
+					onClick={onExportPDF}
+					className="rounded-lg bg-red-400 px-4 py-2 text-white transition hover:bg-red-700"
+				>
+					Export as PDF
+				</button>
+			</div>
+
+			<div className="flex flex-1 justify-end sm:flex-none">
+				<button
+					onClick={onNewSearch}
+					className="bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200 rounded-lg border px-4 py-2 transition"
+				>
+					New Search
+				</button>
+			</div>
+		</div>
+	)
+}
+===== src/components/Icon.tsx =====
+import React from 'react'
+
+export default function Icon() {
+	return <div>Icon</div>
+}
+===== src/components/UrlInputForm.tsx =====
+'use client'
+
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+
+export interface UrlInputFormRef {
+	focusInput: () => void
+	clearInput: () => void
+}
+
+interface UrlInputFormProps {
+	onAnalyze: (url: string) => void
+	loading?: boolean
+}
+
+const UrlInputForm = forwardRef<UrlInputFormRef, UrlInputFormProps>(
+	({ onAnalyze, loading = false }, ref) => {
+		const [url, setUrl] = useState('')
+		const inputRef = useRef<HTMLInputElement>(null)
+
+		useImperativeHandle(ref, () => ({
+			focusInput: () => {
+				inputRef.current?.focus()
+			},
+			clearInput: () => {
+				setUrl('')
+			}
+		}))
+
+		const handleSubmit = (e: React.FormEvent) => {
+			e.preventDefault()
+			let normalizedUrl = url.trim()
+			if (!normalizedUrl || loading) return
+
+			// Automatically add https:// if missing
+			if (!/^https?:\/\//i.test(normalizedUrl)) {
+				normalizedUrl = `https://${normalizedUrl}`
+			}
+
+			onAnalyze(normalizedUrl)
+		}
+
+		return (
+			<form
+				onSubmit={handleSubmit}
+				className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md"
+			>
+				<div>
+					<label htmlFor="url-input" className="text-gray-900 mb-2 block text-lg font-semibold">
+						Website URL
+					</label>
+
+					<div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+						<div className="min-w-0 flex-1">
+							<input
+								ref={inputRef}
+								id="url-input"
+								type="text"
+								value={url}
+								onChange={(e) => setUrl(e.target.value)}
+								placeholder="https://example.com or example.com"
+								className="text-gray-800 inset-shadow-sm inset-shadow-blue-500 w-full rounded-md border border-[#bdbdbd] bg-blue-100 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								disabled={loading}
+								required
+							/>
+						</div>
+
+						<div className="mt-3 flex-shrink-0 sm:mt-0">
+							<button
+								type="submit"
+								disabled={loading}
+								className="w-full rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+							>
+								{loading ? 'Analyzing...' : 'Analyze SEO'}
+							</button>
+						</div>
+					</div>
+
+					<p className="text-gray-600 mt-2 text-sm">
+						Enter any website URL to receive a comprehensive SEO analysis powered by AI
+					</p>
+				</div>
+			</form>
+		)
+	}
+)
+
+UrlInputForm.displayName = 'UrlInputForm'
+export default UrlInputForm
+===== src/components/ErrorAlert.tsx =====
+import React from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { Button } from '@flavioespinoza/salsa-ui'
+import { AlertCircle, X } from 'lucide-react'
+
+interface ErrorAlertProps {
+	message: string
+	onDismiss?: () => void
+}
+
+export default function ErrorAlert({ message, onDismiss }: ErrorAlertProps) {
+	const [open, setOpen] = React.useState(true)
+
+	const handleOpenChange = (isOpen: boolean) => {
+		setOpen(isOpen)
+		if (!isOpen && onDismiss) {
+			onDismiss()
+		}
+	}
+
+	return (
+		<Dialog.Root open={open} onOpenChange={handleOpenChange}>
+			<Dialog.Portal>
+				<Dialog.Overlay className="fixed inset-0 bg-black/50" />
+				<Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2">
+					<div className="bg-red-100 p-6">
+						<div className="flex items-start justify-between gap-4">
+							<div className="flex items-center gap-3">
+								<AlertCircle className="h-6 w-6 flex-shrink-0 text-red-600" />
+								<Dialog.Title className="text-lg font-semibold text-red-600">Error</Dialog.Title>
+							</div>
+							<Dialog.Close className="text-gray-400 flex-shrink-0 transition hover:text-red-600">
+								<X className="h-5 w-5 text-red-600" />
+							</Dialog.Close>
+						</div>
+
+						{/* Wrapped message in scrollable div */}
+						<Dialog.Description className="mt-4 text-sm text-red-600">
+							<div className="overflow-hidden">{message}</div>
+						</Dialog.Description>
+
+						<div className="mt-6 flex justify-end">
+							<Dialog.Close asChild>
+								<Button variant="default" className="bg-red-600">
+									Close
+								</Button>
+							</Dialog.Close>
+						</div>
+					</div>
+				</Dialog.Content>
+			</Dialog.Portal>
+		</Dialog.Root>
+	)
+}
+===== src/components/MarkdownWithCode.tsx =====
+'use client'
+
+import React, { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import { Prism as SyntaxHighlighterBase } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { Button } from '@flavioespinoza/salsa-ui'
+import { Check, Copy } from 'lucide-react'
+
+interface MarkdownWithCodeProps {
+	markdown: string
+}
+
+const MarkdownWithCode: React.FC<MarkdownWithCodeProps> = ({ markdown }) => {
+	const CodeBlock = ({ node, inline, className, children, ...props }: any): JSX.Element => {
+		const match = /language-(\w+)/.exec(className || '')
+		const language = match ? match[1] : null
+		const [copied, setCopied] = useState(false)
+
+		const handleCopy = () => {
+			navigator.clipboard.writeText(String(children)).then(() => {
+				setCopied(true)
+				setTimeout(() => setCopied(false), 4000)
+			})
+		}
+
+		const SyntaxHighlighter = SyntaxHighlighterBase as unknown as React.ComponentType<any>
+
+		if (!inline && language) {
+			return (
+				<div className="overflow-hidden rounded-md border border-zinc-200">
+					<div className="flex items-center justify-between bg-sage-600 px-3 font-mono text-[10px] text-white">
+						<span>{language}</span>
+						<Button variant="static" size="sm" className="p-0" onClick={handleCopy}>
+							{copied ? (
+								<div className="flex">
+									<Check className="h-3.5 w-3 text-white" />
+									<div className="ml-1 text-[10px] text-white">Copied</div>
+								</div>
+							) : (
+								<div className="flex">
+									<Copy className="h-3.5 w-3 text-white" />
+									<div className="ml-1 text-[10px] text-white">Copy</div>
+								</div>
+							)}
+						</Button>
+					</div>
+					<SyntaxHighlighter
+						style={vscDarkPlus}
+						language={language}
+						PreTag="div"
+						customStyle={{
+							margin: 0,
+							padding: '1rem',
+							fontSize: '0.875rem'
+						}}
+						{...props}
+					>
+						<div id="parent">{String(children).replace(/\n$/, '')}</div>
+					</SyntaxHighlighter>
+				</div>
+			)
+		}
+
+		return (
+			<code className={className} {...props}>
+				{children}
+			</code>
+		)
+	}
+
+	return (
+		<div className="markdown-parent-element">
+			<ReactMarkdown
+				components={{
+					code: CodeBlock
+				}}
+			>
+				{markdown}
+			</ReactMarkdown>
+		</div>
+	)
+}
+
+export default MarkdownWithCode
+===== src/components/SeoReport.tsx =====
+'use client'
+
+import React from 'react'
+import MarkdownWithCode from './MarkdownWithCode'
+
+interface Metadata {
+	pageTitle: string | null
+	metaDescription: string | null
+	metaKeywords: string | null
+	h1Tags: string[]
+	imageCount: number
+	hasFavicon: boolean
+	titleLength?: number
+	descriptionLength?: number
+}
+
+interface SeoReportProps {
+	report: {
+		_id?: string
+		id?: string | number
+		url: string
+		metadata: Metadata
+		aiFeedback: string
+		createdAt?: string
+	}
+}
+
+export default function SeoReport({ report }: SeoReportProps) {
+	const { url, metadata, aiFeedback, createdAt } = report
+
+	return (
+		<div id="seo-report-container" className="rounded-md bg-white p-6 shadow-lg shadow-md">
+			<h2 className="text-gray-900 mb-2 text-2xl font-bold">SEO Report for <a href={url} target='_blank' className="text-blue-600">{url}</a></h2>
+			{createdAt && (
+				<p className="text-gray-500 mb-4 text-sm">
+					Generated on {new Date(createdAt).toLocaleString()}
+				</p>
+			)}
+
+			<section className="mb-6">
+				<h3 className="text-gray-800 mb-2 text-lg font-semibold">Page Metadata</h3>
+				<ul className="text-gray-700 space-y-1 text-sm">
+					<li>
+						<strong>Title:</strong> {metadata.pageTitle || 'Missing'}
+					</li>
+					<li>
+						<strong>Description:</strong> {metadata.metaDescription || 'Missing'}
+					</li>
+					<li>
+						<strong>Keywords:</strong> {metadata.metaKeywords || 'Not specified'}
+					</li>
+					<li>
+						<strong>Images:</strong> {metadata.imageCount}
+					</li>
+					<li>
+						<strong>Favicon:</strong> {metadata.hasFavicon ? 'Present' : 'Missing'}
+					</li>
+					<li>
+						<strong>H1 Tags:</strong>{' '}
+						{metadata.h1Tags.length > 0 ? metadata.h1Tags.join(', ') : 'None'}
+					</li>
+				</ul>
+			</section>
+
+			<section>
+				<div>
+        <h3 className="text-gray-900 mb-4 text-xl font-semibold">AI-Powered SEO Analysis</h3>
+        <div className="prose max-w-none">
+          <MarkdownWithCode markdown={aiFeedback} />
+        </div>
+      </div>
+			</section>
+		</div>
+	)
+}
+===== src/components/DeleteConfirmDialog.tsx =====
+'use client'
+
+import { useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
+
+interface DeleteConfirmDialogProps {
+	onConfirm: () => void
+	triggerLabel?: string
+	title?: string
+	description?: string
+}
+
+export default function DeleteConfirmDialog({
+	onConfirm,
+	triggerLabel = 'Delete',
+	title = 'Delete Report?',
+	description = 'Are you sure you want to delete this report? This action cannot be undone.'
+}: DeleteConfirmDialogProps) {
+	const [open, setOpen] = useState(false)
+
+	const handleConfirm = () => {
+		onConfirm()
+		setOpen(false)
+	}
+
+	return (
+		<Dialog.Root open={open} onOpenChange={setOpen}>
+			<Dialog.Trigger asChild>
+				<button className="text-sm font-medium text-red-600 transition hover:text-red-800">
+					{triggerLabel}
+				</button>
+			</Dialog.Trigger>
+
+			<Dialog.Portal>
+				<Dialog.Overlay className="data-[state=open]:animate-fadeIn fixed inset-0 bg-black/40" />
+				<Dialog.Content className="data-[state=open]:animate-fadeIn fixed left-1/2 top-1/2 w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-lg focus:outline-none">
+					<Dialog.Title className="text-gray-900 mb-2 text-lg font-semibold">{title}</Dialog.Title>
+					<Dialog.Description className="text-gray-600 mb-6 text-sm">
+						{description}
+					</Dialog.Description>
+
+					<div className="flex justify-end gap-3">
+						<Dialog.Close asChild>
+							<button className="text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md px-4 py-2 transition">
+								Cancel
+							</button>
+						</Dialog.Close>
+						<button
+							onClick={handleConfirm}
+							className="rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700"
+						>
+							Delete
+						</button>
+					</div>
+				</Dialog.Content>
+			</Dialog.Portal>
+		</Dialog.Root>
+	)
+}
+===== src/lib/openai.ts =====
+import OpenAI from 'openai'
+import { PageMetadata, validateMetadata } from './scraper'
+
+console.log(process.env.OPENAI_API_KEY)
+
+const openai = new OpenAI({
+	apiKey: process.env.OPENAI_API_KEY
+})
+
+export interface SeoAnalysis {
+	summary: string
+	strengths: string[]
+	improvements: string[]
+	technicalIssues: string[]
+	recommendations: string[]
+}
+
+export async function generateSeoFeedback(metadata: PageMetadata): Promise<string> {
+	const { issues, warnings } = validateMetadata(metadata)
+
+	// Beginning of prompt
+	const prompt = `You are an expert SEO consultant. Analyze the following webpage metadata and provide actionable SEO improvement recommendations.
+
+Website URL: ${metadata.url}
+
+Metadata:
+- Page Title: ${metadata.pageTitle || 'MISSING'}
+- Title Length: ${metadata.titleLength} characters
+- Meta Description: ${metadata.metaDescription || 'MISSING'}
+- Description Length: ${metadata.descriptionLength} characters
+- Meta Keywords: ${metadata.metaKeywords || 'Not specified'}
+- H1 Tags: ${metadata.h1Tags.length > 0 ? metadata.h1Tags.join(', ') : 'NONE FOUND'}
+- Number of Images: ${metadata.imageCount}
+- Has Favicon: ${metadata.hasFavicon ? 'Yes' : 'No'}
+
+Automated Issues Detected:
+${issues.length > 0 ? issues.map((i) => `- ${i}`).join('\n') : '- None'}
+
+Automated Warnings:
+${warnings.length > 0 ? warnings.map((w) => `- ${w}`).join('\n') : '- None'}
+
+Please provide:
+1. A brief overall SEO health summary (2-3 sentences)
+2. Key strengths (if any)
+3. Critical improvements needed
+4. Technical SEO issues
+5. Specific, actionable recommendations
+
+Format your response in clear sections with bullet points where appropriate. Be specific and practical.`
+
+	// End of prompt
+
+	try {
+		const response = await openai.chat.completions.create({
+			model: 'gpt-4o-mini',
+			messages: [
+				{
+					role: 'system',
+					content:
+						'You are an expert SEO consultant providing clear, actionable advice. Focus on practical improvements that will have the most impact.'
+				},
+				{
+					role: 'user',
+					content: prompt
+				}
+			],
+			temperature: 0.7,
+			max_tokens: 1000
+		})
+
+		const feedback = response.choices[0]?.message?.content
+
+		if (!feedback) {
+			throw new Error('No feedback generated from OpenAI')
+		}
+
+		return feedback
+	} catch (error) {
+		if (error instanceof Error) {
+			throw new Error(`OpenAI API error: ${error.message}`)
+		}
+		throw new Error('Failed to generate SEO feedback')
+	}
+}
+
+export function parseSeoFeedback(feedback: string): SeoAnalysis {
+	const lines = feedback.split('\n')
+	const analysis: SeoAnalysis = {
+		summary: '',
+		strengths: [],
+		improvements: [],
+		technicalIssues: [],
+		recommendations: []
+	}
+
+	let currentSection: keyof SeoAnalysis | null = null
+	let summaryLines: string[] = []
+
+	for (const line of lines) {
+		const trimmed = line.trim()
+
+		if (!trimmed) continue
+
+		if (trimmed.toLowerCase().includes('summary') || trimmed.toLowerCase().includes('overall')) {
+			currentSection = 'summary'
+			continue
+		} else if (trimmed.toLowerCase().includes('strength')) {
+			currentSection = 'strengths'
+			continue
+		} else if (
+			trimmed.toLowerCase().includes('improvement') ||
+			trimmed.toLowerCase().includes('critical')
+		) {
+			currentSection = 'improvements'
+			continue
+		} else if (trimmed.toLowerCase().includes('technical')) {
+			currentSection = 'technicalIssues'
+			continue
+		} else if (trimmed.toLowerCase().includes('recommendation')) {
+			currentSection = 'recommendations'
+			continue
+		}
+
+		if (currentSection === 'summary') {
+			if (!trimmed.startsWith('-') && !trimmed.startsWith('*') && !trimmed.match(/^\d+\./)) {
+				summaryLines.push(trimmed)
+			}
+		} else if (
+			currentSection !== null &&
+			(trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.match(/^\d+\./))
+		) {
+			const content = trimmed
+				.replace(/^[-*]\s*/, '')
+				.replace(/^\d+\.\s*/, '')
+				.trim()
+			if (content) {
+				analysis[currentSection].push(content)
+			}
+		}
+	}
+
+	analysis.summary = summaryLines.join(' ').trim()
+
+	return analysis
+}
+===== src/lib/export.ts =====
+// src/lib/export.ts
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
+
+/**
+ * Generate a markdown version of the SEO report
+ */
+export function generateMarkdown(report: {
+	url: string
+	metadata: {
+		pageTitle: string | null
+		metaDescription: string | null
+		metaKeywords: string | null
+		h1Tags: string[]
+		imageCount: number
+		hasFavicon: boolean
+	}
+	aiFeedback: string
+	createdAt?: string
+}): string {
+	const { metadata, aiFeedback, url, createdAt } = report
+
+	return `# SEO Report for ${url}
+
+**Generated:** ${createdAt ? new Date(createdAt).toLocaleString() : 'N/A'}
+
+---
+
+## 🏷 Page Metadata
+
+- **Title:** ${metadata.pageTitle || 'Missing'}
+- **Description:** ${metadata.metaDescription || 'Missing'}
+- **Keywords:** ${metadata.metaKeywords || 'Not specified'}
+- **Images:** ${metadata.imageCount}
+- **Favicon:** ${metadata.hasFavicon ? 'Present' : 'Missing'}
+- **H1 Tags:**  
+${metadata.h1Tags.length > 0 ? metadata.h1Tags.map((tag) => `  - ${tag}`).join('\n') : '  - None'}
+
+---
+
+## 🤖 AI-Powered SEO Analysis
+
+${aiFeedback}
+`
+}
+
+/**
+ * Export the visible SEO report as a PDF.
+ * Captures the HTML content of an element by ID and converts it to a downloadable PDF file.
+ */
+export async function exportToPDF(elementId: string, url?: string): Promise<void> {
+	const element = document.getElementById(elementId)
+	if (!element) {
+		console.warn(`Element with id "${elementId}" not found.`)
+		return
+	}
+
+	// Render the HTML to canvas
+	const canvas = await html2canvas(element, {
+		scale: 2,
+		backgroundColor: '#ffffff'
+	})
+
+	// Convert the canvas to image data
+	const imgData = canvas.toDataURL('image/png')
+
+	// Create the PDF
+	const pdf = new jsPDF('p', 'mm', 'a4')
+	const width = pdf.internal.pageSize.getWidth()
+	const height = (canvas.height * width) / canvas.width
+	pdf.addImage(imgData, 'PNG', 0, 0, width, height)
+
+	// Build a safe domain name
+	const domain = (() => {
+		try {
+			const parsed = new URL(url || '')
+			return parsed.hostname.replace(/^www\./, '').replace(/[^\w.-]/g, '_')
+		} catch {
+			return 'unknown-site'
+		}
+	})()
+
+	// Format date as YYYY-MM-DD_hh-mm-ss_Z
+	const now = new Date()
+	const formattedDate = now.toISOString().replace('T', '_').replace(/:/g, '-').replace(/\..+/, '_Z')
+
+	// Save PDF with readable name
+	pdf.save(`seo-report-${domain}-${formattedDate}.pdf`)
+}
+===== src/lib/db.ts =====
+import { MongoClient } from 'mongodb'
+
+if (!process.env.MONGODB_URI) {
+	throw new Error('Please add your MongoDB URI to .env.local')
+}
+
+const uri = process.env.MONGODB_URI
+const options = {}
+
+let client: MongoClient
+let clientPromise: Promise<MongoClient>
+
+declare global {
+	// allow global var in dev mode
+	// eslint-disable-next-line no-var
+	var _mongoClientPromise: Promise<MongoClient> | undefined
+}
+
+if (process.env.NODE_ENV === 'development') {
+	if (!global._mongoClientPromise) {
+		client = new MongoClient(uri, options)
+		global._mongoClientPromise = client.connect()
+	}
+	clientPromise = global._mongoClientPromise
+} else {
+	client = new MongoClient(uri, options)
+	clientPromise = client.connect()
+}
+
+export default clientPromise
+===== src/lib/scraper.ts =====
+import * as cheerio from 'cheerio'
+import { z } from 'zod'
+
+export interface PageMetadata {
+	url: string
+	pageTitle: string | null
+	metaDescription: string | null
+	metaKeywords: string | null
+	h1Tags: string[]
+	imageCount: number
+	hasFavicon: boolean
+	titleLength: number
+	descriptionLength: number
+}
+
+const urlSchema = z.string().url()
+
+export class ScraperError extends Error {
+	constructor(
+		message: string,
+		public statusCode?: number
+	) {
+		super(message)
+		this.name = 'ScraperError'
+	}
+}
+
+export async function scrapeMetadata(url: string): Promise<PageMetadata> {
+	try {
+		urlSchema.parse(url)
+	} catch (error) {
+		throw new ScraperError('Invalid URL format')
+	}
+
+	const fullUrl = url.startsWith('http') ? url : `https://${url}`
+
+	try {
+		const controller = new AbortController()
+		const timeout = setTimeout(() => controller.abort(), 10000)
+
+		const response = await fetch(fullUrl, {
+			signal: controller.signal,
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (compatible; SEO-Report-Generator/1.0)'
+			}
+		})
+
+		clearTimeout(timeout)
+
+		if (!response.ok) {
+			throw new ScraperError(
+				`Failed to fetch URL: ${response.status} ${response.statusText}`,
+				response.status
+			)
+		}
+
+		const html = await response.text()
+		const $ = cheerio.load(html)
+
+		const pageTitle = $('title').first().text().trim() || null
+		const metaDescription = $('meta[name="description"]').attr('content')?.trim() || null
+		const metaKeywords = $('meta[name="keywords"]').attr('content')?.trim() || null
+
+		const h1Tags: string[] = []
+		$('h1').each((_, el) => {
+			const text = $(el).text().trim()
+			if (text) h1Tags.push(text)
+		})
+
+		const imageCount = $('img').length
+		const hasFavicon = $('link[rel*="icon"]').length > 0
+
+		const titleLength = pageTitle?.length || 0
+		const descriptionLength = metaDescription?.length || 0
+
+		return {
+			url: fullUrl,
+			pageTitle,
+			metaDescription,
+			metaKeywords,
+			h1Tags,
+			imageCount,
+			hasFavicon,
+			titleLength,
+			descriptionLength
+		}
+	} catch (error) {
+		if (error instanceof ScraperError) {
+			throw error
+		}
+
+		if (error instanceof Error) {
+			if (error.name === 'AbortError') {
+				throw new ScraperError('Request timeout - the website took too long to respond')
+			}
+			throw new ScraperError(`Failed to scrape URL: ${error.message}`)
+		}
+
+		throw new ScraperError('An unknown error occurred while scraping')
+	}
+}
+
+export function validateMetadata(metadata: PageMetadata): {
+	issues: string[]
+	warnings: string[]
+} {
+	const issues: string[] = []
+	const warnings: string[] = []
+
+	if (!metadata.pageTitle) {
+		issues.push('Missing page title')
+	} else {
+		if (metadata.titleLength < 30) {
+			warnings.push('Title is too short (recommended: 50-60 characters)')
+		} else if (metadata.titleLength > 60) {
+			warnings.push('Title is too long (recommended: 50-60 characters)')
+		}
+	}
+
+	if (!metadata.metaDescription) {
+		issues.push('Missing meta description')
+	} else {
+		if (metadata.descriptionLength < 120) {
+			warnings.push('Meta description is too short (recommended: 150-160 characters)')
+		} else if (metadata.descriptionLength > 160) {
+			warnings.push('Meta description is too long (recommended: 150-160 characters)')
+		}
+	}
+
+	if (metadata.h1Tags.length === 0) {
+		issues.push('No H1 tags found')
+	} else if (metadata.h1Tags.length > 1) {
+		warnings.push(
+			`Multiple H1 tags found (${metadata.h1Tags.length}). Best practice is one H1 per page.`
+		)
+	}
+
+	if (!metadata.hasFavicon) {
+		warnings.push('No favicon detected')
+	}
+
+	return { issues, warnings }
+}

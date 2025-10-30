@@ -1,0 +1,32 @@
+src
+├── app
+│   ├── api
+│   │   ├── analyze
+│   │   │   └── route.ts
+│   │   └── reports
+│   │       ├── [id]
+│   │       │   └── route.ts
+│   │       └── route.ts
+│   ├── favicon.ico
+│   ├── layout.tsx
+│   └── page.tsx
+├── components
+│   ├── DeleteConfirmDialog.tsx
+│   ├── ErrorAlert.tsx
+│   ├── ExportButtons.tsx
+│   ├── Icon.tsx
+│   ├── MarkdownWithCode.tsx
+│   ├── ReportHistory.tsx
+│   ├── SeoReport.tsx
+│   └── UrlInputForm.tsx
+├── lib
+│   ├── db.ts
+│   ├── export.ts
+│   ├── openai.ts
+│   └── scraper.ts
+├── styles
+│   └── globals.css
+└── types
+    └── report.ts
+
+9 directories, 20 files

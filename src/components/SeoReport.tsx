@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import MarkdownWithCode from './MarkdownWithCode'
 
 interface Metadata {
 	pageTitle: string | null
@@ -29,7 +30,7 @@ export default function SeoReport({ report }: SeoReportProps) {
 
 	return (
 		<div id="seo-report-container" className="rounded-md bg-white p-6 shadow-lg shadow-md">
-			<h2 className="text-gray-900 mb-2 text-2xl font-bold">SEO Report for {url}</h2>
+			<h2 className="text-gray-900 mb-2 text-2xl font-bold">SEO Report for <a href={url} target='_blank' className="text-blue-600">{url}</a></h2>
 			{createdAt && (
 				<p className="text-gray-500 mb-4 text-sm">
 					Generated on {new Date(createdAt).toLocaleString()}
@@ -62,8 +63,12 @@ export default function SeoReport({ report }: SeoReportProps) {
 			</section>
 
 			<section>
-				<h3 className="text-gray-800 mb-2 text-lg font-semibold">AI Feedback</h3>
-				<p className="text-gray-700 whitespace-pre-line text-sm">{aiFeedback}</p>
+				<div>
+        <h3 className="text-gray-900 mb-4 text-xl font-semibold">AI-Powered SEO Analysis</h3>
+        <div className="prose max-w-none">
+          <MarkdownWithCode markdown={aiFeedback} />
+        </div>
+      </div>
 			</section>
 		</div>
 	)

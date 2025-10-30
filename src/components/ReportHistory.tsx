@@ -28,7 +28,7 @@ export default function ReportHistory({
 	}
 
 	if (!reports || reports.length === 0) {
-		return <div className="text-gray-500 rounded-xl p-4 text-center">No reports found.</div>
+		return <div className="text-gray-500 rounded-xl p-4 text-center bg-white shadow-lg">No reports found.</div>
 	}
 
 	const handleViewReport = async (id: string | number) => {
