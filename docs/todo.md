@@ -57,5 +57,24 @@
 
 ---
 
+# TODO from ChatGTP
+
+## Enhance Performance
+- [ ] Cache AI responses for repeated URLs.
+- [ ] Add pagination or lazy loading for report history.
+
+## Security & Stability
+- [ ] Sanitize user input further (avoid SSRF via fetch to arbitrary URLs).
+- [ ] Implement API rate limiting or reCAPTCHA.
+
+## User Experience
+- [ ] Add user authentication (NextAuth.js or similar) for multi-user storage.
+- [ ] Include richer analytics like score summaries or trend graphs.
+
+## AI Enhancements
+- [ ] Offer GPT model selection or summarize large AI feedback for quick insights.
+- [ ] Train prompt for more structured output (JSON or Markdown with defined sections).
+
+
 ### Notes
 These updates improve **UI consistency**, **interaction clarity**, and **presentation quality** across the SEO report and history components.

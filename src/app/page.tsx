@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useSetRecoilState } from 'recoil'
+import { reportHistoryState, reportTagsState } from '@/state/atoms'
 import ErrorAlert from '@/components/ErrorAlert'
-import ExportButtons from '@/components/ExportButtons'
 import ReportHistory from '@/components/ReportHistory'
 import SeoReport from '@/components/SeoReport'
 import UrlInputForm, { UrlInputFormRef } from '@/components/UrlInputForm'
@@ -13,54 +14,65 @@ export default function Home() {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [currentReport, setCurrentReport] = useState<Report | null>(null)
-	const [reportHistory, setReportHistory] = useState<ReportSummary[]>([])
 	const [historyLoading, setHistoryLoading] = useState(true)
 	const urlInputRef = useRef<UrlInputFormRef>(null)
 
-	useEffect(() => {
-		const loadReports = async () => {
-			try {
-				setHistoryLoading(true)
-				const response = await fetch('/api/reports')
-				if (!response.ok) {
-					console.error('Failed to load reports: HTTP', response.status)
-					return
-				}
-				const data = await response.json()
-				if (data.success && Array.isArray(data.reports)) {
-					setReportHistory(data.reports)
-				} else {
-					console.error('Unexpected response format:', data)
-				}
-			} catch (err) {
-				console.error('Error fetching report history:', err)
-			} finally {
-				setHistoryLoading(false)
-			}
-		}
+	// ✅ Recoil setters
+	const setReportHistory = useSetRecoilState(reportHistoryState)
+	const setReportTags = useSetRecoilState(reportTagsState)
 
+	useEffect(() => {
 		loadReports()
 	}, [])
 
+	const loadReports = async () => {
+		try {
+			setHistoryLoading(true)
+			const response = await fetch('/api/reports')
+			if (!response.ok) throw new Error('Failed to load reports')
+			const data = await response.json()
+
+			if (data.success && Array.isArray(data.reports)) {
+				setReportHistory(data.reports)
+				setReportTags(extractTags(data.reports))
+			}
+		} catch (err) {
+			console.error('Error loading reports:', err)
+			setError('Failed to load reports')
+		} finally {
+			setHistoryLoading(false)
+		}
+	}
+
+	// Utility: collect tags from MongoDB reports
+	const extractTags = (reports: ReportSummary[]): string[] => {
+		const tags = new Set<string>()
+		reports.forEach(r => {
+			r.tags?.forEach(t => tags.add(t))
+			if (r.businessCategory) tags.add(r.businessCategory)
+		})
+		return Array.from(tags)
+	}
+
 	const handleAnalyze = async (url: string) => {
-		setLoading(true)
 		setError(null)
+		setLoading(true)
 		setCurrentReport(null)
+
 		try {
 			const response = await fetch('/api/analyze', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ url })
 			})
+
 			const data = await response.json()
 			if (!response.ok) throw new Error(data.error || 'Failed to analyze website')
+
 			if (data.success && data.report) {
 				setCurrentReport(data.report)
-				// Refresh history after new report is created
-				const res = await fetch('/api/reports')
-				const refreshed = await res.json()
-				if (refreshed.success) setReportHistory(refreshed.reports)
-			}
+				await loadReports()
+			} else throw new Error('Invalid response format')
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'An unexpected error occurred')
 		} finally {
@@ -68,134 +80,149 @@ export default function Home() {
 		}
 	}
 
-	const handleSelectReport = async (id: string | number) => {
+	const handleViewReport = async (id: string) => {
 		try {
 			const response = await fetch(`/api/reports/${id}`)
 			const data = await response.json()
 			if (data.success && data.report) {
 				setCurrentReport(data.report)
-				setError(null)
-			}
+				window.scrollTo({ top: 0, behavior: 'smooth' })
+			} else setError('Failed to load report')
 		} catch {
 			setError('Failed to load report')
 		}
 	}
 
-	const handleDeleteReport = async (id: string | number) => {
+	const handleDeleteReport = async (id: string) => {
 		try {
 			const response = await fetch(`/api/reports/${id}`, { method: 'DELETE' })
-			if (response.ok) {
-				if (currentReport?._id === id || currentReport?.id === id) {
+			const data = await response.json()
+
+			if (data.success) {
+				await loadReports()
+				if (currentReport && (currentReport._id === id || currentReport.id?.toString() === id)) {
 					setCurrentReport(null)
 				}
-				const updated = await fetch('/api/reports')
-				const data = await updated.json()
-				if (data.success) setReportHistory(data.reports)
-			}
+			} else setError(data.error || 'Failed to delete report')
 		} catch {
 			setError('Failed to delete report')
 		}
 	}
 
-	const handleExportMarkdown = () => {
-		if (!currentReport) return
-
-		const domain = (() => {
-			try {
-				const parsed = new URL(currentReport.url)
-				return parsed.hostname.replace(/^www\./, '').replace(/[^\w.-]/g, '_')
-			} catch {
-				return 'unknown-site'
+	const handleExportPDF = async (id?: string) => {
+		try {
+			let reportToExport = currentReport
+			if (id && (!currentReport || currentReport._id !== id)) {
+				const response = await fetch(`/api/reports/${id}`)
+				const data = await response.json()
+				if (data.success && data.report) reportToExport = data.report
 			}
-		})()
-
-		const now = new Date()
-		const formattedDate = now
-			.toISOString()
-			.replace('T', '_')
-			.replace(/:/g, '-')
-			.replace(/\..+/, '_Z')
-
-		const markdown = generateMarkdown(currentReport)
-		const blob = new Blob([markdown], { type: 'text/markdown' })
-		const url = URL.createObjectURL(blob)
-		const a = document.createElement('a')
-		a.href = url
-		a.download = `seo-report-${domain}-${formattedDate}.md`
-		a.click()
-		URL.revokeObjectURL(url)
+			if (reportToExport) await exportToPDF('seo-report-content', reportToExport.url)
+		} catch {
+			setError('Failed to export PDF')
+		}
 	}
 
-	const handleExportPDF = async () => {
-		await exportToPDF('seo-report-container', currentReport?.url)
+	const handleExportMarkdown = async (id?: string) => {
+		try {
+			let reportToExport = currentReport
+			if (id && (!currentReport || currentReport._id !== id)) {
+				const response = await fetch(`/api/reports/${id}`)
+				const data = await response.json()
+				if (data.success && data.report) reportToExport = data.report
+			}
+			if (reportToExport) {
+				const markdown = generateMarkdown({
+					url: reportToExport.url,
+					metadata: reportToExport.metadata,
+					aiFeedback: reportToExport.aiFeedback,
+					createdAt: typeof reportToExport.createdAt === 'string'
+						? reportToExport.createdAt
+						: reportToExport.createdAt?.toISOString()
+				})
+				const blob = new Blob([markdown], { type: 'text/markdown' })
+				const url = URL.createObjectURL(blob)
+				const a = document.createElement('a')
+				a.href = url
+				a.download = `seo-report-${reportToExport.url.replace(/https?:\/\//, '')}.md`
+				document.body.appendChild(a)
+				a.click()
+				document.body.removeChild(a)
+				URL.revokeObjectURL(url)
+			}
+		} catch {
+			setError('Failed to export Markdown')
+		}
 	}
 
-	const handleNewSearch = () => {
+	const handleBackToList = () => {
 		setCurrentReport(null)
 		setError(null)
-		urlInputRef.current?.clearInput()
 		window.scrollTo({ top: 0, behavior: 'smooth' })
-		setTimeout(() => {
-			urlInputRef.current?.focusInput()
-		}, 300)
+		urlInputRef.current?.focusInput()
 	}
 
 	return (
-		<main className="min-h-screen px-4 py-12 sm:px-6 lg:px-8">
-			<div className="mx-auto max-w-3xl">
-				<div className="mb-12 text-center">
-					<h1 className="text-gray-900 mb-3 text-4xl font-bold">SEO Report Generator</h1>
-					<p className="text-gray-600 text-lg">
-						AI-powered website analysis to improve your search engine optimization
-					</p>
-				</div>
+		<div className="min-h-screen bg-gray-100">
+			<header className="text-center py-8 md:py-12 bg-gray-100">
+				<h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">
+					SEO Report Generator
+				</h1>
+				<p className="text-base md:text-lg text-gray-700">
+					AI-powered website analysis to improve your search engine optimization
+				</p>
+			</header>
 
-				{/* Always visible input form */}
+			<div className="container mx-auto px-4 pb-8 md:pb-12 max-w-[1400px]">
 				<div className="mb-8">
 					<UrlInputForm ref={urlInputRef} onAnalyze={handleAnalyze} loading={loading} />
 				</div>
 
-				{/* Error alert if any */}
 				{error && (
-					<div className="mb-8">
+					<div className="mb-6">
 						<ErrorAlert message={error} onDismiss={() => setError(null)} />
 					</div>
 				)}
 
-				{/* Current report display */}
-				{currentReport && (
-					<>
-						<ExportButtons
-							onExportMarkdown={handleExportMarkdown}
+				<div className="space-y-8">
+					{currentReport ? (
+						<div className="flex flex-col lg:flex-row gap-6">
+							<aside className="w-full lg:w-80 flex-shrink-0">
+								<ReportHistory
+									onViewReport={handleViewReport}
+									onDeleteReport={handleDeleteReport}
+									onExportPDF={handleExportPDF}
+									onExportMarkdown={handleExportMarkdown}
+									loading={historyLoading}
+									isReportView={true}
+									currentReportId={currentReport._id}
+								/>
+							</aside>
+							<div className="flex-1 min-w-0">
+								<SeoReport
+									report={currentReport}
+									onExportPDF={() => handleExportPDF()}
+									onExportMarkdown={() => handleExportMarkdown()}
+									onBackToList={handleBackToList}
+								/>
+							</div>
+						</div>
+					) : (
+						<ReportHistory
+							onViewReport={handleViewReport}
+							onDeleteReport={handleDeleteReport}
 							onExportPDF={handleExportPDF}
-							onNewSearch={handleNewSearch}
-							className="mb-4"
-						/>
-						<SeoReport report={currentReport} />
-						<ExportButtons
 							onExportMarkdown={handleExportMarkdown}
-							onExportPDF={handleExportPDF}
-							onNewSearch={handleNewSearch}
-							className="mt-6"
+							loading={historyLoading}
+							isReportView={false}
 						/>
-					</>
-				)}
-
-				{/* Report History */}
-				<div className="mx-auto max-w-3xl">
-					<ReportHistory
-						reports={reportHistory}
-						onSelectReport={handleSelectReport}
-						onDeleteReport={handleDeleteReport}
-						loading={historyLoading}
-						activeReportId={currentReport?._id || currentReport?.id || null}
-					/>
+					)}
 				</div>
 
-				<footer className="text-gray-500 mt-16 text-center text-sm">
-					<p>Built with Next.js, TypeScript, and OpenAI</p>
+				<footer className="text-center mt-12 md:mt-16 text-sm text-gray-600">
+					Built with Next.js, TypeScript, and OpenAI
 				</footer>
 			</div>
-		</main>
+		</div>
 	)
 }

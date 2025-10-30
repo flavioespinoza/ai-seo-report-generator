@@ -8,13 +8,16 @@ interface DeleteConfirmDialogProps {
 	triggerLabel?: string
 	title?: string
 	description?: string
+	/** Optional custom trigger (icon/button). If provided, it's rendered asChild. */
+	trigger?: React.ReactNode
 }
 
 export default function DeleteConfirmDialog({
 	onConfirm,
 	triggerLabel = 'Delete',
 	title = 'Delete Report?',
-	description = 'Are you sure you want to delete this report? This action cannot be undone.'
+	description = 'Are you sure you want to delete this report? This action cannot be undone.',
+	trigger
 }: DeleteConfirmDialogProps) {
 	const [open, setOpen] = useState(false)
 
@@ -25,11 +28,15 @@ export default function DeleteConfirmDialog({
 
 	return (
 		<Dialog.Root open={open} onOpenChange={setOpen}>
-			<Dialog.Trigger asChild>
-				<button className="text-sm font-medium text-red-600 transition hover:text-red-800">
-					{triggerLabel}
-				</button>
-			</Dialog.Trigger>
+			{trigger ? (
+				<Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
+			) : (
+				<Dialog.Trigger asChild>
+					<button className="text-sm font-medium text-red-600 transition hover:text-red-800">
+						{triggerLabel}
+					</button>
+				</Dialog.Trigger>
+			)}
 
 			<Dialog.Portal>
 				<Dialog.Overlay className="data-[state=open]:animate-fadeIn fixed inset-0 bg-black/40" />

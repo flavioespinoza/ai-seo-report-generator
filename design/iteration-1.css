@@ -1,0 +1,26 @@
+/* // Primary Accent Color (for interactive elements, primary buttons, key highlights)
+--color-primary-accent: #4c8bab;
+
+// Secondary Muted Color (for subtle backgrounds, secondary elements, borders)
+--color-secondary-muted: #636e5b;
+
+// Tertiary Accent Color (for critical tags, error states, warnings)
+--color-tertiary-accent: #fe3557;
+
+// Base Backgrounds (light neutrals)
+--color-background-light: #ffffff; // Example: main content areas
+--color-background-light-alt: #f8f8f8; // Example: sidebar, card backgrounds
+
+// Text Colors (based on a light background for readability)
+--color-text-dark: #333333; // Example: body text, main headings
+--color-text-medium: #666666; // Example: secondary text, labels
+--color-text-light: #999999; // Example: helper text, disabled states
+
+// Other Tag Colors (examples, adjust as needed)
+// Assuming 'Optimized' might be a green, 'Content' a purple/yellow etc.
+// For example, if 'Optimized' is green, 'Technical' is orange, 'Meta' is a muted blue:
+--color-tag-optimized: #4CAF50; // Green
+--color-tag-technical: #FF9800; // Orange
+--color-tag-meta: #7986CB; // Muted Indigo
+This should give you a solid foundation for setting up your CSS variables or Tailwind CSS tailwind.config.js file.
+ */

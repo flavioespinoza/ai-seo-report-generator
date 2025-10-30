@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 
-export interface UrlInputFormRef {
+export interface UrlInputFormRef { 
 	focusInput: () => void
 	clearInput: () => void
 }
