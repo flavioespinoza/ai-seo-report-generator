@@ -15,6 +15,14 @@ export interface PageMetadata {
 
 const urlSchema = z.string().url()
 
+/**
+ * Custom error class for handling scraper-specific errors.
+ * This allows for distinguishing between generic errors and errors that occur
+ * during the fetching or parsing of a webpage.
+ *
+ * @param {string} message - The error message.
+ * @param {number} [statusCode] - An optional HTTP status code associated with the error.
+ */
 export class ScraperError extends Error {
 	constructor(
 		message: string,
@@ -25,6 +33,15 @@ export class ScraperError extends Error {
 	}
 }
 
+/**
+ * Scrapes a given URL to extract SEO-relevant metadata.
+ * It fetches the HTML of the page, parses it using Cheerio, and extracts
+ * information like title, meta description, H1 tags, image count, and favicon presence.
+ *
+ * @param {string} url - The URL of the webpage to scrape.
+ * @returns {Promise<PageMetadata>} A promise that resolves to an object containing the scraped metadata.
+ * @throws {ScraperError} Throws a ScraperError if the URL is invalid, fetching fails, or the request times out.
+ */
 export async function scrapeMetadata(url: string): Promise<PageMetadata> {
 	try {
 		urlSchema.parse(url)
@@ -100,6 +117,14 @@ export async function scrapeMetadata(url: string): Promise<PageMetadata> {
 	}
 }
 
+/**
+ * Validates scraped metadata against common SEO best practices.
+ * This function checks for critical issues (like a missing title) and warnings
+ * (like a title being too long) and returns them in separate arrays.
+ *
+ * @param {PageMetadata} metadata - The metadata object to validate.
+ * @returns {{ issues: string[], warnings: string[] }} An object containing arrays of issue strings and warning strings.
+ */
 export function validateMetadata(metadata: PageMetadata): {
 	issues: string[]
 	warnings: string[]

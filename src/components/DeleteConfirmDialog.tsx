@@ -12,6 +12,18 @@ interface DeleteConfirmDialogProps {
 	trigger?: React.ReactNode
 }
 
+/**
+ * A dialog component that prompts the user for confirmation before performing a delete action.
+ * It provides a customizable trigger, title, and description.
+ *
+ * @param {DeleteConfirmDialogProps} props - The props for the component.
+ * @param {() => void} props.onConfirm - The function to call when the user confirms the action.
+ * @param {string} [props.triggerLabel='Delete'] - The text to display on the default trigger button.
+ * @param {string} [props.title='Delete Report?'] - The title of the dialog.
+ * @param {string} [props.description='Are you sure you want to delete this report? This action cannot be undone.'] - The description text within the dialog.
+ * @param {React.ReactNode} [props.trigger] - An optional custom trigger element (e.g., an icon button).
+ * @returns {JSX.Element} The rendered dialog component.
+ */
 export default function DeleteConfirmDialog({
 	onConfirm,
 	triggerLabel = 'Delete',

@@ -10,6 +10,15 @@ const analyzeSchema = z.object({
 	url: z.string().url('Please provide a valid URL')
 })
 
+/**
+ * Handles the POST request to analyze a URL for SEO.
+ * This endpoint scrapes metadata from a given URL, generates AI-based SEO feedback,
+ * derives tags and a business category, and saves a comprehensive report to the database.
+ *
+ * @param {NextRequest} request - The incoming Next.js API request object, containing the URL to be analyzed in its JSON body.
+ * @returns {Promise<NextResponse>} A promise that resolves to a JSON response containing the saved report data on success,
+ * or an error message on failure.
+ */
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json()

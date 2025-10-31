@@ -1,6 +1,11 @@
-// src/utils/getTagColor.ts
-// Modern pastel-friendly tag palette for SEO Report Generator
-
+/**
+ * Returns a Tailwind CSS class string for styling a tag based on its content.
+ * The function matches keywords within the tag string to determine the appropriate color scheme,
+ * which helps to visually categorize tags (e.g., critical issues are red, optimizations are green).
+ *
+ * @param {string} tag - The tag string to be evaluated.
+ * @returns {string} A string of Tailwind CSS classes for background, text, and border colors.
+ */
 export function getTagColor(tag: string): string {
 	const lower = tag.toLowerCase()
 

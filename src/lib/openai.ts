@@ -15,6 +15,15 @@ export interface SeoAnalysis {
 	recommendations: string[]
 }
 
+/**
+ * Generates SEO feedback for a given webpage using the OpenAI API.
+ * It constructs a detailed prompt based on the scraped metadata, sends it to the GPT-4o-mini model,
+ * and returns the AI-generated analysis as a raw string.
+ *
+ * @param {PageMetadata} metadata - The scraped metadata of the webpage to be analyzed.
+ * @returns {Promise<string>} A promise that resolves to a string containing the SEO feedback.
+ * @throws {Error} Throws an error if the OpenAI API call fails or returns no feedback.
+ */
 export async function generateSeoFeedback(metadata: PageMetadata): Promise<string> {
 	const { issues, warnings } = validateMetadata(metadata)
 
@@ -83,6 +92,15 @@ Format your response in clear sections with bullet points where appropriate. Be 
 	}
 }
 
+/**
+ * Parses a raw SEO feedback string from OpenAI into a structured SeoAnalysis object.
+ * The function iterates through the lines of the feedback text, identifying section headers
+ * (like "Summary:", "Strengths:", etc.) and populating the corresponding fields in the
+ * analysis object.
+ *
+ * @param {string} feedback - The raw, unstructured string of SEO feedback from the OpenAI API.
+ * @returns {SeoAnalysis} A structured object containing the parsed SEO analysis.
+ */
 export function parseSeoFeedback(feedback: string): SeoAnalysis {
 	const lines = feedback.split('\n')
 	const analysis: SeoAnalysis = {

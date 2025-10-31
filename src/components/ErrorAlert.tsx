@@ -7,6 +7,16 @@ interface ErrorAlertProps {
 	onDismiss?: () => void
 }
 
+/**
+ * A modal dialog component that displays an error message.
+ * It includes an error icon, a title, the error message, and a close button.
+ * The dialog can be dismissed by clicking the close button or the "Close" button.
+ *
+ * @param {ErrorAlertProps} props - The props for the component.
+ * @param {string} props.message - The error message to display.
+ * @param {() => void} [props.onDismiss] - An optional function to call when the dialog is dismissed.
+ * @returns {JSX.Element} The rendered error alert dialog.
+ */
 export default function ErrorAlert({ message, onDismiss }: ErrorAlertProps) {
 	const [open, setOpen] = React.useState(true)
 

@@ -21,6 +21,21 @@ interface ReportHistoryProps {
 type SortField = 'createdAt' | 'url'
 type SortDirection = 'asc' | 'desc'
 
+/**
+ * A component that displays a filterable and sortable history of SEO reports.
+ * It allows users to search, filter by tags, and sort reports by creation date or URL.
+ * Each report in the list has actions to view, delete, or export as PDF or Markdown.
+ *
+ * @param {ReportHistoryProps} props - The props for the component.
+ * @param {(id: string) => void} props.onViewReport - Function to handle viewing a report.
+ * @param {(id: string) => void} props.onDeleteReport - Function to handle deleting a report.
+ * @param {(id: string) => void} props.onExportPDF - Function to handle exporting a report as PDF.
+ * @param {(id: string) => void} props.onExportMarkdown - Function to handle exporting a report as Markdown.
+ * @param {boolean} [props.loading=false] - A boolean to indicate if the reports are currently loading.
+ * @param {boolean} [props.isReportView=false] - A boolean to indicate if the component is being displayed in the main report view.
+ * @param {string} [props.currentReportId] - The ID of the currently active report.
+ * @returns {JSX.Element} The rendered report history component.
+ */
 export default function ReportHistory({
 	onViewReport,
 	onDeleteReport,

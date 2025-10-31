@@ -7,6 +7,14 @@ interface AnalyzeLoadingModalProps {
 	open: boolean
 }
 
+/**
+ * A modal component that displays a loading spinner and message during SEO analysis.
+ * It uses Radix UI's Dialog to create an accessible and unstyled modal foundation.
+ *
+ * @param {AnalyzeLoadingModalProps} props - The props for the component.
+ * @param {boolean} props.open - A boolean that controls whether the modal is visible.
+ * @returns {JSX.Element} The rendered modal component.
+ */
 export default function AnalyzeLoadingModal({ open }: AnalyzeLoadingModalProps) {
 	return (
 		<Dialog.Root open={open}>
