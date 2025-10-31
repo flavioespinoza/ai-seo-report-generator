@@ -98,27 +98,32 @@ export function parseSeoFeedback(feedback: string): SeoAnalysis {
 
 	for (const line of lines) {
 		const trimmed = line.trim()
+		const lowerTrimmed = trimmed.toLowerCase()
 
 		if (!trimmed) continue
 
-		if (trimmed.toLowerCase().includes('summary') || trimmed.toLowerCase().includes('overall')) {
-			currentSection = 'summary'
-			continue
-		} else if (trimmed.toLowerCase().includes('strength')) {
-			currentSection = 'strengths'
-			continue
-		} else if (
-			trimmed.toLowerCase().includes('improvement') ||
-			trimmed.toLowerCase().includes('critical')
+		if (
+			!trimmed.startsWith('-') &&
+			!trimmed.startsWith('*') &&
+			!trimmed.match(/^\d+\./) &&
+			lowerTrimmed.endsWith(':')
 		) {
-			currentSection = 'improvements'
-			continue
-		} else if (trimmed.toLowerCase().includes('technical')) {
-			currentSection = 'technicalIssues'
-			continue
-		} else if (trimmed.toLowerCase().includes('recommendation')) {
-			currentSection = 'recommendations'
-			continue
+			if (lowerTrimmed.includes('summary') || lowerTrimmed.includes('overall')) {
+				currentSection = 'summary'
+				continue
+			} else if (lowerTrimmed.includes('strength')) {
+				currentSection = 'strengths'
+				continue
+			} else if (lowerTrimmed.includes('improvement') || lowerTrimmed.includes('critical')) {
+				currentSection = 'improvements'
+				continue
+			} else if (lowerTrimmed.includes('technical')) {
+				currentSection = 'technicalIssues'
+				continue
+			} else if (lowerTrimmed.includes('recommendation')) {
+				currentSection = 'recommendations'
+				continue
+			}
 		}
 
 		if (currentSection === 'summary') {
