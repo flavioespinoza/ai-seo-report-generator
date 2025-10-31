@@ -1,4 +1,5 @@
 /** @type {import('jest').Config} */
+require('dotenv').config({ path: './.env.local' });
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
