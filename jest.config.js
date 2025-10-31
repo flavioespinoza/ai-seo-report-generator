@@ -2,18 +2,17 @@
 require('dotenv').config({ path: './.env.local' });
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
+  testEnvironment: 'jest-environment-jsdom',
   transform: {
     '^.+\\.(ts|tsx)$': 'ts-jest',
+    '^.+\\.(js|jsx)$': 'babel-jest',
   },
-  transformIgnorePatterns: [
-    '/node_modules/(?!cheerio|d3.*|@flavioespinoza/salsa-ui)',
-  ],
+  transformIgnorePatterns: [],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
   },
-  setupFiles: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   testPathIgnorePatterns: ['/node_modules/', '/.next/'],
 }

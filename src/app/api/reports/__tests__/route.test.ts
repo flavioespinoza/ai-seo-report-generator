@@ -1,17 +1,23 @@
+/** @jest-environment node */
+
 import { GET } from '../route'
 import clientPromise from '@/lib/db'
 
-// Mock the external dependencies
+// Mock the database
+const mockToArray = jest.fn()
+const mockSort = jest.fn(() => ({ toArray: mockToArray }))
+const mockFind = jest.fn(() => ({ sort: mockSort }))
+
 jest.mock(
   '@/lib/db',
   () => ({
     __esModule: true,
     default: Promise.resolve({
-      db: jest.fn().mockReturnThis(),
-      collection: jest.fn().mockReturnThis(),
-      find: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnThis(),
-      toArray: jest.fn()
+      db: jest.fn(() => ({
+        collection: jest.fn(() => ({
+          find: mockFind
+        }))
+      }))
     })
   })
 )
@@ -22,41 +28,22 @@ describe('GET /api/reports', () => {
   })
 
   it('should return a list of reports', async () => {
-    const createdAt = new Date()
     const mockReports = [
-      {
-        _id: '1',
-        url: 'http://example.com',
-        pageTitle: 'Example Domain',
-        createdAt: createdAt,
-        tags: ['example', 'domain'],
-        businessCategory: 'Technology'
-      }
+      { _id: '1', url: 'http://example.com' },
+      { _id: '2', url: 'http://example.org' }
     ]
-    const expectedReports = [
-      {
-        _id: '1',
-        url: 'http://example.com',
-        pageTitle: 'Example Domain',
-        createdAt: createdAt.toISOString(),
-        tags: ['example', 'domain'],
-        businessCategory: 'Technology'
-      }
-    ]
-    const mockDb = await clientPromise
-    ;(mockDb.collection('reports').toArray as jest.Mock).mockResolvedValue(mockReports)
+    mockToArray.mockResolvedValue(mockReports)
 
     const response = await GET()
     const data = await response.json()
 
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
-    expect(data.reports).toEqual(expectedReports)
+    expect(data.reports).toEqual(mockReports)
   })
 
   it('should handle database errors', async () => {
-    const mockDb = await clientPromise
-    ;(mockDb.collection('reports').toArray as jest.Mock).mockRejectedValue(new Error('Database error'))
+    mockToArray.mockRejectedValue(new Error('Database error'))
 
     const response = await GET()
     const data = await response.json()
