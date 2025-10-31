@@ -12,6 +12,18 @@ interface UrlInputFormProps {
 	loading?: boolean
 }
 
+/**
+ * A form component for inputting a URL to be analyzed.
+ * It includes a text input for the URL and a submit button. The form handles
+ * URL normalization (adding "https://" if missing) and provides methods to focus
+ * and clear the input field via a ref.
+ *
+ * @param {UrlInputFormProps} props - The props for the component.
+ * @param {(url: string) => void} props.onAnalyze - The function to call when the form is submitted with a valid URL.
+ * @param {boolean} [props.loading=false] - A boolean to indicate if an analysis is currently in progress, which disables the form.
+ * @param {React.Ref<UrlInputFormRef>} ref - A ref that exposes methods to interact with the component.
+ * @returns {JSX.Element} The rendered URL input form.
+ */
 const UrlInputForm = forwardRef<UrlInputFormRef, UrlInputFormProps>(
 	({ onAnalyze, loading = false }, ref) => {
 		const [url, setUrl] = useState('')

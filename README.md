@@ -11,14 +11,12 @@ It features a modern, responsive UI, an accessible dark/light theme, and integra
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
-- [Installation](#installation)
-- [Development](#development)
+- [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
 - [Theming and Design](#theming-and-design)
 - [Core Components](#core-components)
 - [Export and Report Handling](#export-and-report-handling)
-- [Future Improvements](#future-improvements)
 - [License](#license)
 
 ---
@@ -167,54 +165,50 @@ src/
 - `types/report.ts` - TypeScript interfaces and types
 ---
 
-## Installation
+## Getting Started
 
-1. Clone the repository:
+Follow these steps to get the project running locally:
 
-   ```bash
-   git clone https://github.com/flavioespinoza/ai-seo-report-generator.git
-   ```
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/flavioespinoza/ai-seo-report-generator.git
+    cd ai-seo-report-generator
+    ```
 
-2. CD into the directory
+2.  **Install Dependencies**
+    ```bash
+    yarn install
+    ```
 
-  ```bash
-  cd ai-seo-report-generator
-  ```
+3.  **Set Up Environment Variables**
+    Create a `.env` file at the root of the project and add the necessary environment variables. See the [Environment Variables](#environment-variables) section for more details.
 
-3. Install dependencies:
+4.  **Run the Development Server**
+    ```bash
+    yarn dev
+    ```
 
-   ```bash
-   yarn install
-   ```
-
-4. Create a `.env` file at the root with the following variables:
-
-  ```bash
-  # OpenAI API Key
-  # Get your API key from: https://platform.openai.com/api-keys
-  OPENAI_API_KEY=<your_openai_api_key>
-
-  # MongoDB Configuration
-  # Set up your database at: https://www.mongodb.com/cloud/atlas/register
-  # MongoDB connection string
-  MONGODB_URI=mongodb+srv://<your_database_username>:<your_database_password>@cluster.mongodb.net/<your_database_name>?retryWrites=true&w=majority
-  # MongoDB database name
-  MONGODB_DB=<your_database_name>
-  ```
-
-Adjust as needed for your environment.
+The application will be available at `http://localhost:3000`.
 
 ---
 
-## Development
+## Environment Variables
 
-Run the project locally:
+To run this project, you will need to add the following environment variables to your `.env` file:
 
-```bash
-yarn dev
+-   `OPENAI_API_KEY`: Your API key from OpenAI. You can get one [here](https://platform.openai.com/api-keys).
+-   `MONGODB_URI`: Your MongoDB connection string. You can set up a free database at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register).
+-   `MONGODB_DB`: The name of your MongoDB database.
+
+**Example:**
 ```
+# OpenAI API Key
+OPENAI_API_KEY=<your_openai_api_key>
 
-The app will be available at [http://localhost:3000](http://localhost:3000).
+# MongoDB Configuration
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/<db_name>?retryWrites=true&w=majority
+MONGODB_DB=<db_name>
+```
 
 ---
 
@@ -304,58 +298,6 @@ seo-report-{your_url}-{YYYY-MM-DD}_{HH-MM-SS}_Z.{file_type}
 - Works on **Windows, Mac, and Linux**
 - No weird symbols that break things
 - Clean, clear, and always in order!
-
----
-
-## Future Improvements
-
-### 1. Testing and Stability
-- **Migrate tests to Jest with `ts-jest`** for consistent TypeScript handling.
-- **Add integration tests** for API routes (`/api/reports` and `/api/analyze`).
-- **Mock external dependencies** such as `fetch` and OpenAI API to improve test reliability.
-- **Include error handling tests** for network timeouts and invalid responses.
-
-### 2. Code Quality and Architecture
-- **Refactor API route logic** into reusable functions within `lib/` for better separation of concerns.
-- **Add input validation schemas** (Zod) for `/api/analyze` and `/api/reports` endpoints.
-- **Implement centralized error handler** to return structured error responses.
-- **Improve type safety** by extending shared TypeScript interfaces across components and API responses.
-
-### 3. Frontend UX Enhancements
-- **Add progress indicators** inside the Analyze modal (e.g., "Fetching HTML", "Analyzing Metadata", "Generating AI Feedback").
-- **Enable cancel button** during SEO analysis to abort requests.
-- **Add skeleton loaders** for report cards and history table.
-- **Persist filter state** (tags, search query) between sessions using `localStorage`.
-
-### 4. Export and Data Management
-- **Support batch export** of multiple reports (PDF and Markdown).
-- **Add CSV export** for SEO report summaries.
-- **Improve file naming** consistency and allow custom export filenames.
-- **Embed report metadata** (date, domain, version) in exported Markdown and PDF files.
-
-### 5. Performance and Scalability
-- **Add caching** for repeated URL analyses.
-- **Introduce incremental static regeneration (ISR)** for faster server responses.
-- **Optimize `html2canvas` rendering** by excluding unnecessary elements (buttons, tooltips).
-- **Implement pagination or virtualized lists** for large report histories.
-
-### 6. UI and Theming
-- **Add color system presets** (e.g., blue, green, amber themes).
-- **Improve dark mode contrast** in cards, tooltips, and table headers.
-- **Add motion preferences** to respect user’s reduced motion settings.
-- **Introduce consistent spacing system** across cards, buttons, and modals.
-
-### 7. Developer Experience
-- **Add ESLint and Prettier configs** aligned with Next.js defaults.
-- **Add commit hooks with Husky** to enforce linting before commits.
-- **Include a sample `.env.local.example`** for new contributors.
-- **Improve README** with environment setup, test coverage, and deployment instructions.
-
-### 8. Deployment and Monitoring
-- **Enable Vercel analytics** for performance insights.
-- **Add logging middleware** for API routes to monitor failures.
-- **Integrate Sentry or Logtail** for error tracking in production.
-- **Use environment-specific configuration** to separate dev, staging, and prod builds.
 
 ---
 

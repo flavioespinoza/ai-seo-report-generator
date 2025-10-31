@@ -11,6 +11,14 @@ import { reportHistoryState, reportTagsState } from '@/state/atoms'
 import type { Report, ReportSummary } from '@/types/report'
 import { useSetRecoilState } from 'recoil'
 
+/**
+ * The main page component for the application.
+ * It manages the application's state, including loading status, errors, the current report,
+ * and the report history. It also handles the logic for analyzing URLs, viewing, deleting,
+ * and exporting reports.
+ *
+ * @returns {JSX.Element} The rendered home page.
+ */
 export default function Home() {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)

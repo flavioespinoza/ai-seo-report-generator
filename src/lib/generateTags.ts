@@ -1,5 +1,15 @@
 import type { Metadata, ReportTag } from '@/types/report'
 
+/**
+ * Generates a list of SEO-related tags based on website metadata.
+ * This function analyzes the provided metadata for common SEO issues and assigns tags
+ * accordingly, such as 'Missing Meta Description', 'Title Too Long', etc. It also provides
+ * an overall health status tag like 'Critical Issues' or 'Optimized'.
+ *
+ * @param {Metadata} metadata - The scraped metadata of the website.
+ * @param {string} aiFeedback - AI-generated feedback string (currently unused in this function but included for future enhancements).
+ * @returns {ReportTag[]} An array of strings representing the identified SEO tags.
+ */
 export function generateTagsFromMetadata(metadata: Metadata, aiFeedback: string): ReportTag[] {
 	const tags: ReportTag[] = []
 
@@ -56,6 +66,16 @@ export function generateTagsFromMetadata(metadata: Metadata, aiFeedback: string)
 	return tags
 }
 
+/**
+ * Detects the business category of a website based on its content.
+ * This function analyzes the page title, meta description, H1 tags, and AI feedback
+ * to identify keywords that suggest a specific business category like 'E-commerce' or 'SaaS'.
+ *
+ * @param {Metadata} metadata - The scraped metadata of the website.
+ * @param {string} aiFeedback - The AI-generated SEO feedback text.
+ * @param {string} url - The URL of the website (currently unused but included for future context).
+ * @returns {string} The detected business category, or 'Other' if no specific category is identified.
+ */
 export function detectBusinessCategory(
 	metadata: Metadata,
 	aiFeedback: string,

@@ -12,6 +12,18 @@ interface SeoReportProps {
 	onBackToList: () => void
 }
 
+/**
+ * A component that displays a detailed SEO report.
+ * It includes a header with the page title and URL, action buttons to export the report,
+ * a list of SEO tags, a metadata overview, and AI-generated feedback rendered as Markdown.
+ *
+ * @param {SeoReportProps} props - The props for the component.
+ * @param {Report} props.report - The SEO report data to display.
+ * @param {() => void} props.onExportPDF - Function to handle exporting the report as a PDF.
+ * @param {() => void} props.onExportMarkdown - Function to handle exporting the report as Markdown.
+ * @param {() => void} props.onBackToList - Function to navigate back to the report list view.
+ * @returns {JSX.Element | null} The rendered SEO report, or null if no report is provided.
+ */
 export default function SeoReport({
 	report,
 	onExportPDF,
