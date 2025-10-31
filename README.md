@@ -220,6 +220,33 @@ MONGODB_DB=<db_name>
 | `yarn  build` | Build the production bundle   |
 | `yarn  start` | Serve the production build    |
 | `yarn  clean` | Format all code with Prettier |
+| `yarn test`   | Run all tests with Jest       |
+
+---
+
+## Testing
+
+This project uses **Jest** for unit and integration testing. Tests are co-located with the source code in `__tests__` directories.
+
+### Test Files
+
+Here is a list of all the test files in the project:
+
+-   `src/app/api/analyze/__tests__/route.test.ts`
+-   `src/app/api/reports/__tests__/route.test.ts`
+-   `src/app/api/reports/[id]/__tests__/route.test.ts`
+-   `src/components/__tests__/DeleteConfirmDialog.test.tsx`
+-   `src/lib/__tests__/generateTags.test.ts`
+-   `src/lib/__tests__/openai.test.ts`
+-   `src/lib/__tests__/scraper.test.ts`
+
+### Running Tests
+
+To run all tests, use the following command:
+
+```bash
+yarn test
+```
 
 ---
 
