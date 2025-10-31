@@ -60,6 +60,7 @@ Format your response in clear sections with bullet points where appropriate. Be 
 	// End of prompt
 
 	try {
+		console.log('prompt:', prompt)
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',
 			messages: [

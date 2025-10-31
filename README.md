@@ -220,6 +220,7 @@ MONGODB_DB=<db_name>
 | `yarn  build` | Build the production bundle   |
 | `yarn  start` | Serve the production build    |
 | `yarn  clean` | Format all code with Prettier |
+| `yarn  test`  | Run all tests                 |
 
 ---
 
@@ -234,6 +235,42 @@ Global theming is handled in `globals.css` using Tailwind’s `@layer` directive
 - Dark mode is activated with the `.dark` class and is automatically color-aware.
 
 ---
+
+## Core AI Implementation
+
+### AI Prompt
+
+- Search criteria: "google.com"
+- Prompt generated and sent to OpenAI/ChatGTP:
+  ```txt
+  You are an expert SEO consultant. Analyze the following webpage metadata and provide actionable SEO improvement recommendations.
+
+  Website URL: https://google.com
+
+  Metadata:
+  - Page Title: Google
+  - Title Length: 6 characters
+  - Meta Description: Search the world's information, including webpages, images, videos and more. Google has many special features to help you find exactly what you're looking for.
+  - Description Length: 159 characters
+  - Meta Keywords: Not specified
+  - H1 Tags: NONE FOUND
+  - Number of Images: 1
+  - Has Favicon: No
+
+  Automated Issues Detected:
+  - No H1 tags found
+
+  Automated Warnings:
+  - Title is too short (recommended: 50-60 characters)
+  - No favicon detected
+
+  Please provide:
+  1. A brief overall SEO health summary (2-3 sentences)
+  2. Key strengths (if any)
+  3. Critical improvements needed
+  4. Technical SEO issues
+  5. Specific, actionable recommendations
+  ```
 
 ## Core Components
 
