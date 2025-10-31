@@ -1,6 +1,5 @@
 import React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { Button } from '@flavioespinoza/salsa-ui'
 import { AlertCircle, X } from 'lucide-react'
 
 interface ErrorAlertProps {
@@ -41,9 +40,9 @@ export default function ErrorAlert({ message, onDismiss }: ErrorAlertProps) {
 
 						<div className="mt-6 flex justify-end">
 							<Dialog.Close asChild>
-								<Button variant="default" className="btn-danger">
+								<button className="btn-danger">
 									Close
-								</Button>
+								</button>
 							</Dialog.Close>
 						</div>
 					</div>

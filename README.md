@@ -172,51 +172,49 @@ src/
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/ai-seo-report-generator.git
-   
-   cd ai-seo-report-generator
+   git clone https://github.com/flavioespinoza/ai-seo-report-generator.git
    ```
 
-2. Install dependencies:
+2. CD into the directory
+
+  ```bash
+  cd ai-seo-report-generator
+  ```
+
+3. Install dependencies:
 
    ```bash
    yarn install
    ```
 
-3. Set up your environment variables (see below).
+4. Create a `.env` file at the root with the following variables:
+
+  ```bash
+  # OpenAI API Key
+  # Get your API key from: https://platform.openai.com/api-keys
+  OPENAI_API_KEY=<your_openai_api_key>
+
+  # MongoDB Configuration
+  # Set up your database at: https://www.mongodb.com/cloud/atlas/register
+  # MongoDB connection string
+  MONGODB_URI=mongodb+srv://<your_database_username>:<your_database_password>@cluster.mongodb.net/<your_database_name>?retryWrites=true&w=majority
+  # MongoDB database name
+  MONGODB_DB=<your_database_name>
+  ```
+
+Adjust as needed for your environment.
 
 ---
 
 ## Development
 
-the project locally:
+Run the project locally:
 
 ```bash
 yarn dev
 ```
 
 The app will be available at [http://localhost:3000](http://localhost:3000).
-
----
-
-## Environment Variables
-
-Create a `.env` file at the root with the following variables:
-
-```bash
-# OpenAI API Key
-# Get your API key from: https://platform.openai.com/api-keys
-OPENAI_API_KEY=<your_openai_api_key>
-
-# MongoDB Configuration
-# Set up your database at: https://www.mongodb.com/cloud/atlas/register
-# MongoDB connection string
-MONGODB_URI=mongodb+srv://<your_database_username>:<your_database_password>@cluster.mongodb.net/<your_database_name>?retryWrites=true&w=majority
-# MongoDB database name
-MONGODB_DB=<your_database_name>
-```
-
-Adjust as needed for your environment.
 
 ---
 
@@ -228,7 +226,6 @@ Adjust as needed for your environment.
 | `yarn  build` | Build the production bundle   |
 | `yarn  start` | Serve the production build    |
 | `yarn  clean` | Format all code with Prettier |
-| `yarn  lint`  | ESLint checks                 |
 
 ---
 
@@ -282,16 +279,23 @@ All exports are named dynamically using the target site’s domain and a UTC tim
 
 #### File Name Pattern
 
-```bas
-your-name-2025-10-30_18-22-54_Z.pdf
+```bash
+# .pdf or .md ()
+seo-report-{your_url}-{YYYY-MM-DD}_{HH-MM-SS}_Z.{file_type}
 ```
 **What it means:**
 
-- `your-name` → What the file is about (like a website or project)
-- `2025-10-30` → The **date** (year-month-day)
-- `_18-22-54` → The **time** (hour-minute-second, 24-hour clock)
-- `_Z` → Made in **UTC time** (like "world time" — no confusion with time zones)
-- `.pdf` → The file type
+- `your_url` → What **web domain** are you analyzing (google.com, amazon.com, etc.)
+- `YYYY-MM-DD` → The **date** (year-month-day)
+- `HH-MM-SS` → The **time** (hour-minute-second on a 24-hour clock)
+- `_Z` → Made in **UTC time** (Z is for Zulu a.k.a. GMT — no confusion with time zones)
+- `file_type` → The file type (pdf or md)
+
+**Example:**  
+
+`seo-report-google.com-2025-10-30_18-22-54_Z.pdf` 
+
+→ "A pdf of an SEO report for google.com was downloaded on Oct 30, 2025 at 6:22 PM UTC"
 
 **Why it’s good:**
 
@@ -299,16 +303,7 @@ your-name-2025-10-30_18-22-54_Z.pdf
 - Files **sort correctly** in any folder (newest on bottom)
 - Works on **Windows, Mac, and Linux**
 - No weird symbols that break things
-
-**Example:**  
-`seo-report-google.com-2025-10-30_18-22-54_Z.pdf`  
-→ "SEO report for google.com, saved on Oct 30, 2025 at 6:22 PM UTC"
-
----
-
-**Just remember:**  
-**Name + Date + Time + Z + .filetype**  
-→ Clean, clear, and always in order!
+- Clean, clear, and always in order!
 
 ---
 
