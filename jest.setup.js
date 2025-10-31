@@ -1,6 +1,6 @@
 // Polyfill fetch for Node testing
-import 'openai/shims/node'
-import { TextEncoder, TextDecoder } from 'util'
+require('openai/shims/node')
+const { TextEncoder, TextDecoder } = require('util')
 
 // Global fetch polyfill
 if (!global.fetch) {
