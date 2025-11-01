@@ -14,6 +14,7 @@ It features a modern, responsive UI, an accessible dark/light theme, and integra
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
+- [Testing](#testing)
 - [Theming and Design](#theming-and-design)
 - [Core Components](#core-components)
 - [Export and Report Handling](#export-and-report-handling)
