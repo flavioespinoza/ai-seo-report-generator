@@ -3,14 +3,22 @@ import { GET, DELETE } from '../route'
 import clientPromise from '@/lib/db'
 import { ObjectId } from 'mongodb'
 
+// Create mock functions for collection methods
+const mockFindOne = jest.fn()
+const mockDeleteOne = jest.fn()
+
 // Mock the database
 jest.mock(
   '@/lib/db',
   () => ({
     __esModule: true,
     default: Promise.resolve({
-      db: jest.fn().mockReturnThis(),
-      collection: jest.fn().mockReturnThis()
+      db: jest.fn(() => ({
+        collection: jest.fn(() => ({
+          findOne: mockFindOne,
+          deleteOne: mockDeleteOne,
+        })),
+      })),
     })
   })
 )
@@ -22,10 +30,9 @@ describe('GET /api/reports/[id]', () => {
 
   it('should return a report for a valid ID', async () => {
     const mockReport = { _id: new ObjectId(), url: 'http://example.com' }
-    const db = await clientPromise
-    ;(db.collection('reports').findOne as jest.Mock).mockResolvedValue(mockReport)
+    mockFindOne.mockResolvedValue(mockReport)
 
-    const response = await GET({ params: { id: mockReport._id.toHexString() } } as any)
+    const response = await GET({} as Request, { params: { id: mockReport._id.toHexString() } })
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -34,22 +41,20 @@ describe('GET /api/reports/[id]', () => {
   })
 
   it('should return a 404 error for a non-existent ID', async () => {
-    const db = await clientPromise
-    ;(db.collection('reports').findOne as jest.Mock).mockResolvedValue(null)
+    mockFindOne.mockResolvedValue(null)
 
-    const response = await GET({ params: { id: new ObjectId().toHexString() } } as any)
+    const response = await GET({} as Request, { params: { id: new ObjectId().toHexString() } })
     const data = await response.json()
 
     expect(response.status).toBe(404)
     expect(data.success).toBe(false)
-    expect(data.error).toBe('Report not found')
+    expect(data.error).toBe('Report not found.')
   })
 
   it('should handle database errors', async () => {
-    const db = await clientPromise
-    ;(db.collection('reports').findOne as jest.Mock).mockRejectedValue(new Error('Database error'))
+    mockFindOne.mockRejectedValue(new Error('Database error'))
 
-    const response = await GET({ params: { id: new ObjectId().toHexString() } } as any)
+    const response = await GET({} as Request, { params: { id: new ObjectId().toHexString() } })
     const data = await response.json()
 
     expect(response.status).toBe(500)
@@ -64,10 +69,9 @@ describe('DELETE /api/reports/[id]', () => {
   })
 
   it('should delete a report for a valid ID', async () => {
-    const db = await clientPromise
-    ;(db.collection('reports').deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 })
+    mockDeleteOne.mockResolvedValue({ deletedCount: 1 })
 
-    const response = await DELETE({ params: { id: new ObjectId().toHexString() } } as any)
+    const response = await DELETE({} as Request, { params: { id: new ObjectId().toHexString() } })
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -75,24 +79,20 @@ describe('DELETE /api/reports/[id]', () => {
   })
 
   it('should return a 404 error for a non-existent ID', async () => {
-    const db = await clientPromise
-    ;(db.collection('reports').deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 0 })
+    mockDeleteOne.mockResolvedValue({ deletedCount: 0 })
 
-    const response = await DELETE({ params: { id: new ObjectId().toHexString() } } as any)
+    const response = await DELETE({} as Request, { params: { id: new ObjectId().toHexString() } })
     const data = await response.json()
 
     expect(response.status).toBe(404)
     expect(data.success).toBe(false)
-    expect(data.error).toBe('Report not found')
+    expect(data.error).toBe('Report not found.')
   })
 
   it('should handle database errors', async () => {
-    const db = await clientPromise
-    ;(db.collection('reports').deleteOne as jest.Mock).mockRejectedValue(
-      new Error('Database error')
-    )
+    mockDeleteOne.mockRejectedValue(new Error('Database error'))
 
-    const response = await DELETE({ params: { id: new ObjectId().toHexString() } } as any)
+    const response = await DELETE({} as Request, { params: { id: new ObjectId().toHexString() } })
     const data = await response.json()
 
     expect(response.status).toBe(500)

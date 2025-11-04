@@ -1,9 +1,16 @@
 import OpenAI from 'openai'
 import { PageMetadata, validateMetadata } from './scraper'
 
-const openai = new OpenAI({
-	apiKey: process.env.OPENAI_API_KEY
-})
+let openaiInstance: OpenAI | null = null
+
+function getOpenAI(): OpenAI {
+	if (!openaiInstance) {
+		openaiInstance = new OpenAI({
+			apiKey: process.env.OPENAI_API_KEY
+		})
+	}
+	return openaiInstance
+}
 
 export interface SeoAnalysis {
 	summary: string
@@ -58,6 +65,7 @@ Format your response in clear sections with bullet points where appropriate. Be 
 	// End of prompt
 
 	try {
+		const openai = getOpenAI()
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',
 			messages: [
