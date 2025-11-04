@@ -1,3 +1,4 @@
+/** @jest-environment node */
 import { scrapeMetadata, validateMetadata, ScraperError } from '../scraper'
 import { PageMetadata } from '../scraper'
 

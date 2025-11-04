@@ -1,4 +1,4 @@
-
+/** @jest-environment node */
 import { PageMetadata } from '../scraper'
 
 let generateSeoFeedback: any, parseSeoFeedback: any
