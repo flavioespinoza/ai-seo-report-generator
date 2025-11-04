@@ -236,7 +236,6 @@ Here is a list of all the test files in the project:
 -   `src/app/api/analyze/__tests__/route.test.ts`
 -   `src/app/api/reports/__tests__/route.test.ts`
 -   `src/app/api/reports/[id]/__tests__/route.test.ts`
--   `src/components/__tests__/DeleteConfirmDialog.test.tsx`
 -   `src/lib/__tests__/generateTags.test.ts`
 -   `src/lib/__tests__/openai.test.ts`
 -   `src/lib/__tests__/scraper.test.ts`
