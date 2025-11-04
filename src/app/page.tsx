@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import AnalyzeLoadingModal from '@/components/AnalyzeLoadingModal'
+import AuthButton from '@/components/AuthButton'
 import ErrorAlert from '@/components/ErrorAlert'
 import ReportHistory from '@/components/ReportHistory'
 import SeoReport from '@/components/SeoReport'
@@ -9,6 +10,8 @@ import UrlInputForm, { UrlInputFormRef } from '@/components/UrlInputForm'
 import { exportToPDF, generateMarkdown } from '@/lib/export'
 import { reportHistoryState, reportTagsState } from '@/state/atoms'
 import type { Report, ReportSummary } from '@/types/report'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
 import { useSetRecoilState } from 'recoil'
 
 /**
@@ -20,37 +23,36 @@ import { useSetRecoilState } from 'recoil'
  * @returns {JSX.Element} The rendered home page.
  */
 export default function Home() {
-	const [loading, setLoading] = useState(false)
-	const [error, setError] = useState<string | null>(null)
 	const [currentReport, setCurrentReport] = useState<Report | null>(null)
-	const [historyLoading, setHistoryLoading] = useState(true)
 	const urlInputRef = useRef<UrlInputFormRef>(null)
+	const { data: session } = useSession()
+	const queryClient = useQueryClient()
 
 	// Recoil setters
 	const setReportHistory = useSetRecoilState(reportHistoryState)
 	const setReportTags = useSetRecoilState(reportTagsState)
 
-	useEffect(() => {
-		loadReports()
-	}, [])
-
-	const loadReports = async () => {
-		try {
-			setHistoryLoading(true)
+	const {
+		data: reports,
+		isLoading: historyLoading,
+		error,
+		refetch
+	} = useQuery<ReportSummary[]>({
+		queryKey: ['reports'],
+		queryFn: async () => {
 			const response = await fetch('/api/reports')
-			if (!response.ok) throw new Error('Failed to load reports')
-			const data = await response.json()
-
-			if (data.success && Array.isArray(data.reports)) {
-				setReportHistory(data.reports)
-				setReportTags(extractTags(data.reports))
+			if (!response.ok) {
+				throw new Error('Failed to load reports')
 			}
-		} catch {
-			setError('Failed to load reports')
-		} finally {
-			setHistoryLoading(false)
+			const data = await response.json()
+			return data.reports
+		},
+		enabled: !!session,
+		onSuccess: (data) => {
+			setReportHistory(data)
+			setReportTags(extractTags(data))
 		}
-	}
+	})
 
 	const extractTags = (reports: ReportSummary[]): string[] => {
 		const tags = new Set<string>()
@@ -61,71 +63,82 @@ export default function Home() {
 		return Array.from(tags)
 	}
 
-	const handleAnalyze = async (url: string) => {
-		setError(null)
-		setLoading(true)
-		setCurrentReport(null)
-
-		try {
+	const { mutate: analyzeWebsite, isLoading: loading } = useMutation<
+		Report,
+		Error,
+		string
+	>({
+		mutationFn: async (url: string) => {
 			const response = await fetch('/api/analyze', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ url })
 			})
 			const data = await response.json()
-			if (!response.ok) throw new Error(data.error || 'Failed to analyze website')
-
-			if (data.success && data.report) {
-				setCurrentReport(data.report)
-				await loadReports()
-			} else throw new Error('Invalid response format')
-		} catch (err) {
-			setError(err instanceof Error ? err.message : 'An unexpected error occurred')
-		} finally {
-			setLoading(false)
+			if (!response.ok) {
+				throw new Error(data.error || 'Failed to analyze website')
+			}
+			return data.report
+		},
+		onSuccess: (data) => {
+			setCurrentReport(data)
+			queryClient.invalidateQueries(['reports'])
 		}
+	})
+
+	const handleAnalyze = (url: string) => {
+		setCurrentReport(null)
+		analyzeWebsite(url)
 	}
 
-	const handleViewReport = async (id: string) => {
-		try {
+	const { mutate: viewReport } = useMutation<Report, Error, string>({
+		mutationFn: async (id: string) => {
 			const response = await fetch(`/api/reports/${id}`)
 			const data = await response.json()
-			if (data.success && data.report) {
-				setCurrentReport(data.report)
-				window.scrollTo({ top: 0, behavior: 'smooth' })
-			} else setError('Failed to load report')
-		} catch {
-			setError('Failed to load report')
+			if (!response.ok) {
+				throw new Error(data.error || 'Failed to load report')
+			}
+			return data.report
+		},
+		onSuccess: (data) => {
+			setCurrentReport(data)
+			window.scrollTo({ top: 0, behavior: 'smooth' })
 		}
-	}
+	})
 
-	const handleDeleteReport = async (id: string) => {
-		try {
+	const { mutate: deleteReport } = useMutation<void, Error, string>({
+		mutationFn: async (id: string) => {
 			const response = await fetch(`/api/reports/${id}`, { method: 'DELETE' })
-			const data = await response.json()
-
-			if (data.success) {
-				await loadReports()
-				if (currentReport && currentReport._id === id) {
-					setCurrentReport(null)
-				}
-			} else setError(data.error || 'Failed to delete report')
-		} catch {
-			setError('Failed to delete report')
+			if (!response.ok) {
+				const data = await response.json()
+				throw new Error(data.error || 'Failed to delete report')
+			}
+		},
+		onSuccess: () => {
+			if (currentReport) {
+				setCurrentReport(null)
+			}
+			queryClient.invalidateQueries(['reports'])
 		}
-	}
+	})
+
+	const handleViewReport = (id: string) => viewReport(id)
+	const handleDeleteReport = (id: string) => deleteReport(id)
 
 	const handleExportPDF = async (id?: string) => {
 		try {
 			let reportToExport = currentReport
 			if (id && (!currentReport || currentReport._id !== id)) {
-				const response = await fetch(`/api/reports/${id}`)
-				const data = await response.json()
-				if (data.success && data.report) reportToExport = data.report
+				reportToExport = await queryClient.fetchQuery({
+					queryKey: ['reports', id],
+					queryFn: () => viewReport(id)
+				})
 			}
-			if (reportToExport) await exportToPDF('seo-report-content', reportToExport.url)
-		} catch {
-			setError('Failed to export PDF')
+			if (reportToExport) {
+				await exportToPDF('seo-report-content', reportToExport.url)
+			}
+		} catch (error) {
+			console.error('Failed to export PDF:', error)
 		}
 	}
 
@@ -133,9 +146,10 @@ export default function Home() {
 		try {
 			let reportToExport = currentReport
 			if (id && (!currentReport || currentReport._id !== id)) {
-				const response = await fetch(`/api/reports/${id}`)
-				const data = await response.json()
-				if (data.success && data.report) reportToExport = data.report
+				reportToExport = await queryClient.fetchQuery({
+					queryKey: ['reports', id],
+					queryFn: () => viewReport(id)
+				})
 			}
 
 			if (reportToExport) {
@@ -188,14 +202,14 @@ export default function Home() {
 				document.body.removeChild(a)
 				URL.revokeObjectURL(url)
 			}
-		} catch {
-			setError('Failed to export Markdown')
+		} catch (error) {
+			console.error('Failed to export Markdown:', error)
 		}
 	}
 
 	const handleBackToList = () => {
 		setCurrentReport(null)
-		setError(null)
+		queryClient.setQueryData(['reports'], (oldData: any) => oldData)
 		window.scrollTo({ top: 0, behavior: 'smooth' })
 		urlInputRef.current?.focusInput()
 	}
@@ -204,6 +218,9 @@ export default function Home() {
 		<div className="flex min-h-screen flex-col bg-gray-100">
 			{/* Header */}
 			<header className="py-8 text-center md:py-12">
+				<div className="mb-4 flex items-center justify-end px-4 sm:px-6 lg:px-8">
+					<AuthButton />
+				</div>
 				<h1 className="mb-3 text-3xl font-bold md:mb-4 md:text-4xl lg:text-5xl">
 					SEO Report Generator
 				</h1>
@@ -225,7 +242,10 @@ export default function Home() {
 				{/* Error */}
 				{error && (
 					<div>
-						<ErrorAlert message={error} onDismiss={() => setError(null)} />
+						<ErrorAlert
+							message={error.message}
+							onDismiss={() => queryClient.setQueryData(['reports'], {})}
+						/>
 					</div>
 				)}
 

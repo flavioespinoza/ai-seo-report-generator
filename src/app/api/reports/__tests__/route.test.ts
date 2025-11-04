@@ -1,9 +1,10 @@
 import { GET } from '../route'
-import clientPromise from '@/lib/db'
+import clientPromise from '@/lib/mongodb'
+import { getServerSession } from 'next-auth/next'
 
 // Mock the external dependencies
 jest.mock(
-  '@/lib/db',
+  '@/lib/mongodb',
   () => ({
     __esModule: true,
     default: Promise.resolve({
@@ -15,6 +16,8 @@ jest.mock(
     })
   })
 )
+
+jest.mock('next-auth/next')
 
 describe('GET /api/reports', () => {
   afterEach(() => {
@@ -45,6 +48,9 @@ describe('GET /api/reports', () => {
     ]
     const mockDb = await clientPromise
     ;(mockDb.collection('reports').toArray as jest.Mock).mockResolvedValue(mockReports)
+		;(getServerSession as jest.Mock).mockResolvedValue({
+			user: { id: 'user-123' }
+		})
 
     const response = await GET()
     const data = await response.json()
@@ -57,6 +63,9 @@ describe('GET /api/reports', () => {
   it('should handle database errors', async () => {
     const mockDb = await clientPromise
     ;(mockDb.collection('reports').toArray as jest.Mock).mockRejectedValue(new Error('Database error'))
+		;(getServerSession as jest.Mock).mockResolvedValue({
+			user: { id: 'user-123' }
+		})
 
     const response = await GET()
     const data = await response.json()

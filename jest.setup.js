@@ -28,3 +28,9 @@ if (!global.Response.json) {
 // Polyfill TextEncoder / TextDecoder for jsdom
 if (!global.TextEncoder) global.TextEncoder = TextEncoder
 if (!global.TextDecoder) global.TextDecoder = TextDecoder
+
+jest.mock('next-auth', () => ({
+  __esModule: true,
+  default: jest.fn(),
+  getServerSession: jest.fn(),
+}))

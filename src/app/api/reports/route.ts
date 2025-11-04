@@ -1,20 +1,27 @@
 import { NextResponse } from 'next/server'
-import clientPromise from '@/lib/db'
+import clientPromise from '@/lib/mongodb'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 export async function GET() {
+	const session = await getServerSession(authOptions)
+
+	if (!session) {
+		return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+	}
+
 	try {
 		const client = await clientPromise
 		const db = client.db(process.env.MONGODB_DB || 'seo_support_generator')
 
-		// ✅ include pageTitle so the report history list can show it
 		const reports = await db
 			.collection('reports')
 			.find(
-				{},
+				{ userId: session.user.id },
 				{
 					projection: {
 						url: 1,
-						pageTitle: 1, // 👈 add this line
+						pageTitle: 1,
 						createdAt: 1,
 						tags: 1,
 						businessCategory: 1
@@ -26,7 +33,6 @@ export async function GET() {
 
 		return NextResponse.json({ success: true, reports })
 	} catch (error) {
-		console.error('Error loading reports:', error)
 		return NextResponse.json({ success: false, error: 'Failed to load reports' }, { status: 500 })
 	}
 }

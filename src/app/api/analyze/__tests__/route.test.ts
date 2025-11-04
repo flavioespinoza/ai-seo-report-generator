@@ -15,7 +15,7 @@ import { scrapeMetadata, ScraperError } from '@/lib/scraper'
 jest.mock('@/lib/openai')
 jest.mock('@/lib/generateTags')
 jest.mock(
-  '@/lib/db',
+  '@/lib/mongodb',
   () => ({
     __esModule: true,
     default: Promise.resolve({
@@ -29,6 +29,7 @@ jest.mock(
 describe('POST /api/analyze', () => {
   afterEach(() => {
     jest.clearAllMocks()
+		;(require('next-auth').getServerSession as jest.Mock).mockClear()
   })
 
   it('should return a 400 error for an invalid URL', async () => {
@@ -36,6 +37,9 @@ describe('POST /api/analyze', () => {
       method: 'POST',
       body: JSON.stringify({ url: 'invalid-url' })
     })
+		;(require('next-auth').getServerSession as jest.Mock).mockResolvedValue({
+			user: { id: 'user-123' }
+		})
     const response = await POST(req)
     const data = await response.json()
 
@@ -49,6 +53,9 @@ describe('POST /api/analyze', () => {
       method: 'POST',
       body: JSON.stringify({ url: 'http://example.com' })
     })
+		;(require('next-auth').getServerSession as jest.Mock).mockResolvedValue({
+			user: { id: 'user-123' }
+		})
     const response = await POST(req)
     const data = await response.json()
 
@@ -63,6 +70,9 @@ describe('POST /api/analyze', () => {
       method: 'POST',
       body: JSON.stringify({ url: 'http://example.com' })
     })
+		;(require('next-auth').getServerSession as jest.Mock).mockResolvedValue({
+			user: { id: 'user-123' }
+		})
     const response = await POST(req)
     const data = await response.json()
 
@@ -90,6 +100,9 @@ describe('POST /api/analyze', () => {
     ;(generateSeoFeedback as jest.Mock).mockResolvedValue(mockAiFeedback)
     ;(generateTagsFromMetadata as jest.Mock).mockReturnValue(mockTags)
     ;(detectBusinessCategory as jest.Mock).mockReturnValue(mockBusinessCategory)
+		;(require('next-auth').getServerSession as jest.Mock).mockResolvedValue({
+			user: { id: 'user-123' }
+		})
 
     const req = new NextRequest('http://localhost', {
       method: 'POST',

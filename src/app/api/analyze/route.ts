@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import clientPromise from '@/lib/db'
+import clientPromise from '@/lib/mongodb'
 import { detectBusinessCategory, generateTagsFromMetadata } from '@/lib/generateTags'
 import { generateSeoFeedback } from '@/lib/openai'
 import { ScraperError, scrapeMetadata } from '@/lib/scraper'
 import type { Report } from '@/types/report'
 import { z } from 'zod'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 const analyzeSchema = z.object({
 	url: z.string().url('Please provide a valid URL')
@@ -20,6 +22,11 @@ const analyzeSchema = z.object({
  * or an error message on failure.
  */
 export async function POST(request: NextRequest) {
+	const session = await getServerSession(authOptions)
+	if (!session) {
+		return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+	}
+
 	try {
 		const body = await request.json()
 		const validation = analyzeSchema.safeParse(body)
@@ -73,6 +80,7 @@ export async function POST(request: NextRequest) {
 		const collection = db.collection<Report>('reports')
 
 		const newReport: Report = {
+			userId: session.user.id,
 			url: metadata.url,
 			pageTitle, // ✅ top-level title
 			metadata: safeMeta,
@@ -100,7 +108,6 @@ export async function POST(request: NextRequest) {
 			}
 		})
 	} catch (error) {
-		console.error('Analysis error:', error)
 		return NextResponse.json(
 			{
 				error:
