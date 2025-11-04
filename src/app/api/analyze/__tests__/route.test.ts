@@ -1,5 +1,6 @@
 /** @jest-environment node */
 
+require('dotenv').config()
 import { POST } from '../route'
 import { NextRequest } from 'next/server'
 import { generateSeoFeedback } from '@/lib/openai'
