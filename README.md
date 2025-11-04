@@ -1,5 +1,10 @@
 # AI SEO Report Generator
 
+[![Next.js](https://img.shields.io/badge/Next.js-14.2.0-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.0-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 The **AI SEO Report Generator** is a web application built with **Next.js**, **TypeScript**, and **Tailwind CSS** that analyzes websites and produces SEO reports enhanced by AI feedback.
 It features a modern, responsive UI, an accessible dark/light theme, and integrated PDF and Markdown export functionality.
 
@@ -15,6 +20,7 @@ It features a modern, responsive UI, an accessible dark/light theme, and integra
 - [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
 - [Testing](#testing)
+- [Deployment](#deployment)
 - [Theming and Design](#theming-and-design)
 - [Core Components](#core-components)
 - [Export and Report Handling](#export-and-report-handling)
@@ -215,13 +221,16 @@ MONGODB_DB=<db_name>
 
 ## Scripts
 
-| Command       | Description                   |
-| ------------- | ----------------------------- |
-| `yarn dev`    | Start development server      |
-| `yarn  build` | Build the production bundle   |
-| `yarn  start` | Serve the production build    |
-| `yarn  clean` | Format all code with Prettier |
-| `yarn test`   | Run all tests with Jest       |
+| Command         | Description                        |
+| --------------- | ---------------------------------- |
+| `yarn dev`      | Start development server           |
+| `yarn build`    | Build the production bundle        |
+| `yarn start`    | Serve the production build         |
+| `yarn lint`     | Run ESLint to check code quality   |
+| `yarn format`   | Format all code with Prettier      |
+| `yarn clean`    | Format all code with Prettier      |
+| `yarn test`     | Run all tests with Jest            |
+| `yarn deploy`   | Deploy to Vercel (production)      |
 
 ---
 
@@ -247,6 +256,46 @@ To run all tests, use the following command:
 ```bash
 yarn test
 ```
+
+---
+
+## Deployment
+
+This project is configured for easy deployment to **Vercel**.
+
+### Deploy to Vercel
+
+1. **Install Vercel CLI** (if you haven't already):
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **Deploy to Production**:
+   ```bash
+   yarn deploy
+   ```
+
+   Or manually:
+   ```bash
+   vercel --prod
+   ```
+
+### Environment Variables in Vercel
+
+Make sure to add your environment variables to your Vercel project:
+
+1. Go to your Vercel project dashboard
+2. Navigate to **Settings** → **Environment Variables**
+3. Add the following variables:
+   - `OPENAI_API_KEY`
+   - `MONGODB_URI`
+   - `MONGODB_DB`
+
+### One-Click Deploy
+
+You can also deploy this project with one click:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/flavioespinoza/ai-seo-report-generator&env=OPENAI_API_KEY,MONGODB_URI,MONGODB_DB)
 
 ---
 
