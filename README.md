@@ -8,6 +8,8 @@
 The **AI SEO Report Generator** is a web application built with **Next.js**, **TypeScript**, and **Tailwind CSS** that analyzes websites and produces SEO reports enhanced by AI feedback.
 It features a modern, responsive UI, an accessible dark/light theme, and integrated PDF and Markdown export functionality.
 
+[Live Demo](https://ai-seo-report-generator.vercel.app/)
+
 ---
 
 ## Table of Contents
